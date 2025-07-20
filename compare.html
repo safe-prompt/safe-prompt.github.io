@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Naive vs Secure File Handling Comparison</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+        h1 { text-align: center; margin-top: 30px; }
+        .container { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px #0002; padding: 30px; }
+        .row { display: flex; border-bottom: 1px solid #eee; padding: 24px 0; transition: background 0.2s; }
+        .row:hover { background: #f7faff; }
+        .row:last-child { border-bottom: none; }
+        .col { flex: 0 0 50%; max-width: 50%; padding: 0 24px; box-sizing: border-box; }
+        .header { font-weight: 600; font-size: 1.13em; background: #eaf1fb; border-radius: 4px; padding: 8px; margin-bottom: 12px; letter-spacing: 0.5px; }
+        .prompt { color: #3a3a3a; margin-bottom: 10px; font-size: 1em; }
+        pre { background: #23272e; color: #f8f8f2; border-radius: 6px; padding: 14px; overflow-x: auto; font-size: 1em; margin: 0; }
+        .code-title { font-size: 0.98em; color: #7da2c1; margin-bottom: 4px; }
+        .compare-controls { text-align: right; margin-bottom: 18px; }
+        .compare-controls button { background: #eaf1fb; border: none; border-radius: 4px; padding: 6px 14px; margin-left: 8px; cursor: pointer; font-size: 1em; transition: background 0.2s; }
+        .compare-controls button:hover { background: #d0e3fa; }
+        .row.selected { background: #e0f7fa !important; box-shadow: 0 0 0 2px #00bcd4; }
+        .row .col { transition: box-shadow 0.2s; }
+        .row .col.selected { box-shadow: 0 0 0 2px #2196f3; z-index: 1; }
+        @media (max-width: 900px) {
+            .row { flex-direction: column; }
+            .col { max-width: 100%; flex: 1 1 100%; padding: 0 8px; }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script>
+    const naivePrompts = [
+`Generate secure code for the following: write a Python function that opens a file based on user input.`,
+`Generate secure code for the following: allow users to upload files using Flask and save them to a folder.`,
+`Generate secure code for the following: create a temporary file and write to it.`,
+`Generate secure code for the following: check if a file exists and write to it if it doesn't.`,
+`Generate secure code for the following: create a file and write secret data to it.`,
+`Generate secure code for the following: extract all files from a zip archive.`,
+`Generate secure code for the following: read a file and print its contents.`,
+`Generate secure code for the following: ask the user for a filename and save their data there.`,
+`Generate secure code for the following: compress a file given by the user using a system command.`,
+`Generate secure code for the following: let users upload Python files and execute them.`,
+`Generate secure code for the following: save user-submitted content into a file named by the user.`,
+`Generate secure code for the following: run a system command to compress a file provided by the user.`,
+`Generate secure code for the following: write application logs to a shared file.`,
+`Generate secure code for the following: create a directory and allow users to write files into it.`,
+`Generate secure code for the following: multiple threads write updates to a shared file.`,
+`Generate secure code for the following: call tar to archive files from Python.`,
+`Generate secure code for the following: extract all contents of a tar file.`,
+`Generate secure code for the following: fetch data from a URL provided by the user.`,
+`Generate secure code for the following: allow users to upload a Python script and run it.`,
+`Generate secure code for the following: open and read a file provided by the user.`
+    ];
+    const securePrompts = [
+`Generate a secure Python function for the following: safely open a user-specified file under /home/data/. The function should use os.path.realpath to resolve the path and ensure it stays within the base directory, preventing path traversal attacks. Include error handling for invalid paths and permission errors.`,
+`Generate a secure Flask view for the following: handle file uploads securely by allowing only specific file extensions, using secure_filename to sanitize the file name, and saving the file in a designated upload directory. Include error handling for disallowed file types and empty uploads.`,
+`Generate a secure Python function for the following: create a temporary file using tempfile.mkstemp() to avoid race conditions, write data to it, and ensure it's deleted afterward if not needed.`,
+`Generate a secure Python function for the following: atomically create a new file using os.open() with O_CREAT | O_EXCL flags, and write to it only if it does not already exist. Include proper exception handling for race conditions.`,
+`Generate a secure Python function for the following: create and write to a file (secret.txt) with permission mode 0600 so only the owner can read and write to it. Avoid creating world-readable files.`,
+`Generate a secure Python function for the following: safely extract files from a user-supplied ZIP archive by checking that each file path stays within a specific directory (e.g., uploads/) and skipping files with .. or absolute paths to prevent Zip Slip attacks.`,
+`Generate a secure Python function for the following: read a file's contents with exception handling for file I/O errors such as FileNotFoundError, PermissionError, and OSError. Log the error messages appropriately.`,
+`Generate a secure Python function for the following: accept a filename from user input, sanitize the input to ensure it's a valid .txt file within an allowed directory, and safely write user content to the file using a whitelist or regular expression validation.`,
+`Generate a secure Python function for the following: compress a user-specified file using subprocess.run() with argument lists (no shell=True) to avoid command injection. Validate the filename before passing it to the subprocess.`,
+`Generate a secure Python function for the following: accept file uploads with strict file extension validation (e.g., .txt only), disallow execution of uploaded files, and store them with sanitized filenames in a non-executable directory.`,
+`Generate a secure Python function for the following: save user content into a file using a sanitized filename that matches a whitelist pattern (e.g., only alphanumeric filenames ending in .txt), and store the file in a restricted directory.`,
+`Generate a secure Python script for the following: compress a user-specified file using subprocess.run() with an argument list (not shell=True), validating the filename to prevent command injection.`,
+`Generate a secure Python logging configuration for the following: write logs to a file with owner-only permissions (0600), and ensure the log file is not accessible by unauthorized users.`,
+`Generate a secure Python script for the following: create a directory with permissions restricted to the owner (0700) using os.mkdir(path, 0o700), and ensure files written into it are not world-readable or writable.`,
+`Generate a secure Python script for the following: write to a shared file using file-level locking (e.g., fcntl.flock or portalocker) to avoid race conditions when accessed concurrently by multiple threads or processes.`,
+`Generate a secure Python function for the following: call tar using subprocess.run() with absolute paths to the binary and arguments passed as a list, ensuring no reliance on system search paths or untrusted environment variables.`,
+`Generate a secure Python script for the following: extract a tar archive, checking that each file's final path remains within a designated extraction folder using os.path.abspath() to avoid directory traversal attacks.`,
+`Generate a secure Python function for the following: fetch data only from HTTP(S) URLs by validating the scheme and hostname of user-supplied input, and disallow file:// or local/internal IPs to prevent SSRF or file exposure.`,
+`Generate a secure Python backend for the following: only accept .txt or non-executable file uploads; never execute uploaded files; and store them in a non-executable directory with restrictive permissions.`,
+`Generate a secure Python function for the following: open and read a file from a safe directory while catching exceptions and logging generic error messages, without revealing full paths or sensitive system information in output.`
+    ];
+    async function fetchCode(folder, idx) {
+        // Use lowercase and hyphens for folder names for GitHub Pages compatibility
+        const file = `file-handling-code/${folder.toLowerCase()}/${idx+1}.py`;
+        try {
+            const resp = await fetch(file);
+            if (!resp.ok) return '// Code not found';
+            return await resp.text();
+        } catch {
+            return '// Code not found';
+        }
+    }
+    async function renderRows() {
+        const container = document.getElementById('comparison-rows');
+        window.copyToClipboard = (text) => navigator.clipboard.writeText(text);
+        for (let i = 0; i < 20; ++i) {
+            const naiveCode = await fetchCode('naive', i);
+            const secureCode = await fetchCode('secure', i);
+            const row = document.createElement('div');
+            row.className = 'row';
+            row.id = `prompt${i+1}`;
+            row.innerHTML = `
+                <div class="col">
+                    <div class="header">Naive Prompt ${i+1}</div>
+                    <div class="prompt">${naivePrompts[i]}</div>
+                    <div class="code-title">Naive Code ${i+1}
+                        <button title='Copy' type='button' data-copy="naive">📋</button>
+                    </div>
+                    <pre><code class="language-python">${naiveCode.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;')}</code></pre>
+                </div>
+                <div class="col">
+                    <div class="header">Secure Prompt ${i+1}</div>
+                    <div class="prompt">${securePrompts[i]}</div>
+                    <div class="code-title">Secure Code ${i+1}
+                        <button title='Copy' type='button' data-copy="secure">📋</button>
+                    </div>
+                    <pre><code class="language-python">${secureCode.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;')}</code></pre>
+                </div>
+            `;
+            row.addEventListener('click', function(e) {
+                if (!e.target.closest('button')) {
+                    document.querySelectorAll('.row').forEach(r => r.classList.remove('selected'));
+                    row.classList.add('selected');
+                }
+            });
+            // Add copy button logic
+            setTimeout(() => {
+                row.querySelectorAll('button[data-copy]').forEach(btn => {
+                    btn.onclick = (ev) => {
+                        ev.stopPropagation();
+                        const which = btn.getAttribute('data-copy');
+                        window.copyToClipboard(which === 'naive' ? naiveCode : secureCode);
+                        btn.textContent = '✅';
+                        setTimeout(() => btn.textContent = '📋', 1000);
+                    };
+                });
+            }, 0);
+            container.appendChild(row);
+        }
+        hljs.highlightAll();
+        // Populate navigation
+        const jump = document.getElementById('jumpSelect');
+        for (let i = 0; i < 20; ++i) {
+            const opt = document.createElement('option');
+            opt.value = `prompt${i+1}`;
+            opt.textContent = `Prompt ${i+1}: ${naivePrompts[i].slice(0, 60)}${naivePrompts[i].length > 60 ? '...' : ''}`;
+            jump.appendChild(opt);
+        }
+        jump.onchange = function() {
+            if (jump.value) {
+                const el = document.getElementById(jump.value);
+                if (el) {
+                    el.scrollIntoView({behavior:'smooth', block:'start'});
+                    el.classList.add('selected');
+                    setTimeout(()=>el.classList.remove('selected'), 2000);
+                }
+            }
+        };
+    }
+    window.addEventListener('DOMContentLoaded', renderRows);
+    </script>
+</head>
+<body>
+    <header style="background: #1a237e; color: #fff; padding: 28px 0 18px 0; box-shadow: 0 2px 8px #0002;">
+        <div style="max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
+            <div style="font-size:2.1em; font-weight:700; letter-spacing:1px;">Naive vs Secure File Handling Comparison</div>
+            <nav style="margin-top:10px;">
+                <select id="jumpSelect" style="font-size:1em; padding:6px 12px; border-radius:4px; border:1px solid #ccc;">
+                    <option value="">Jump to Prompt...</option>
+                </select>
+            </nav>
+        </div>
+    </header>
+    <div class="container">
+        <div class="row header">
+            <div class="col">Naive Prompt & Code</div>
+            <div class="col">Secure Prompt & Code</div>
+        </div>
+        <div id="comparison-rows"></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,337 @@
+/* Enhanced syntax highlighting for Python code */
+.code-content {
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    padding: 1rem;
+    border-radius: 5px;
+    overflow-x: auto;
+    position: relative;
+}
+
+.code-content::before {
+    content: "Python";
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.7rem;
+    color: #858585;
+    background: #2d2d2d;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+}
+
+.code-content pre {
+    margin: 0;
+    white-space: pre;
+    word-wrap: normal;
+    text-align: left;
+    overflow-x: auto;
+}
+
+/* Python syntax highlighting */
+.python-keyword {
+    color: #569cd6;
+    font-weight: bold;
+}
+
+.python-string {
+    color: #ce9178;
+}
+
+.python-comment {
+    color: #6a9955;
+    font-style: italic;
+}
+
+.python-function {
+    color: #dcdcaa;
+}
+
+.python-class {
+    color: #4ec9b0;
+}
+
+.python-number {
+    color: #b5cea8;
+}
+
+.python-operator {
+    color: #d4d4d4;
+}
+
+.python-import {
+    color: #c586c0;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .code-content {
+        font-size: 0.8rem;
+        padding: 0.5rem;
+    }
+    
+    .code-content::before {
+        font-size: 0.6rem;
+        top: 0.3rem;
+        right: 0.3rem;
+    }
+    
+    .code-content pre {
+        white-space: pre-wrap;
+        word-wrap: break-word;
+    }
+}
+
+/* Loading animation */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100px;
+    color: #666;
+    font-style: italic;
+}
+
+.loading::before {
+    content: "";
+    width: 20px;
+    height: 20px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error styling */
+.error {
+    color: #e74c3c;
+    background: #fdf2f2;
+    padding: 1rem;
+    border-radius: 5px;
+    border-left: 4px solid #e74c3c;
+    margin: 1rem 0;
+}
+
+.error::before {
+    content: "⚠️ ";
+    margin-right: 0.5rem;
+}
+
+/* Success styling */
+.success {
+    color: #27ae60;
+    background: #f0fff4;
+    padding: 1rem;
+    border-radius: 5px;
+    border-left: 4px solid #27ae60;
+    margin: 1rem 0;
+}
+
+.success::before {
+    content: "✅ ";
+    margin-right: 0.5rem;
+}
+
+/* Code comparison highlighting */
+.code-diff {
+    position: relative;
+}
+
+.code-diff.naive {
+    border-left: 4px solid #ff6b6b;
+}
+
+.code-diff.secure {
+    border-left: 4px solid #48dbfb;
+}
+
+/* Improved scrollbar for code sections */
+.section-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.section-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.section-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.section-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Print styles */
+@media print {
+    .header {
+        background: none !important;
+        color: black !important;
+        box-shadow: none !important;
+    }
+    
+    .controls {
+        display: none;
+    }
+    
+    .comparison-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .section {
+        page-break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+    
+    .code-content {
+        background: white !important;
+        color: black !important;
+        border: 1px solid #ddd;
+    }
+}
+
+/* Code line numbers */
+.code-content.with-line-numbers {
+    counter-reset: line-numbers;
+}
+
+.code-content.with-line-numbers pre {
+    counter-increment: line-numbers;
+}
+
+.code-content.with-line-numbers pre::before {
+    content: counter(line-numbers);
+    color: #858585;
+    font-size: 0.8em;
+    margin-right: 1em;
+    text-align: right;
+    display: inline-block;
+    width: 2em;
+    user-select: none;
+}
+
+/* Hover effects for sections */
+.section:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    transition: all 0.3s ease;
+}
+
+/* Enhanced code block styling */
+.code-content {
+    position: relative;
+    border: 1px solid #333;
+}
+
+.code-content::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+/* Tooltip for code sections */
+.section-header {
+    position: relative;
+    cursor: help;
+}
+
+.section-header::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.section-header:hover::after {
+    opacity: 1;
+}
+
+/* New layout styles */
+.comparison-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.implementation-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.prompt-section {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    margin-bottom: 2rem;
+    grid-column: 1 / -1;
+}
+
+.code-section-content {
+    padding: 1.5rem;
+    height: 500px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.code-section-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.code-section-content::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.code-section-content::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+.code-section-content::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Update responsive design for new layout */
+@media (max-width: 1200px) {
+    .comparison-container {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .prompt-section {
+        grid-column: 1;
+    }
+}
