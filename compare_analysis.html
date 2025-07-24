@@ -1,36 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naive vs Secure Comparison</title>
-    <link rel="stylesheet" href="styles.css">
-    <style>
-        body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
-        h1 { text-align: center; margin-top: 30px; }
-        .container { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px #0002; padding: 30px; }
-        .row { display: flex; border-bottom: 1px solid #eee; padding: 24px 0; transition: background 0.2s; }
-        .row:hover { background: #f7faff; }
-        .row:last-child { border-bottom: none; }
-        .col { flex: 0 0 50%; max-width: 50%; padding: 0 24px; box-sizing: border-box; }
-        .header { font-weight: 600; font-size: 1.13em; background: #eaf1fb; border-radius: 4px; padding: 8px; margin-bottom: 12px; letter-spacing: 0.5px; }
-        .prompt { color: #3a3a3a; margin-bottom: 10px; font-size: 1em; }
-        pre { background: #23272e; color: #f8f8f2; border-radius: 6px; padding: 14px; overflow-x: auto; font-size: 1em; margin: 0; }
-        .code-title { font-size: 0.98em; color: #7da2c1; margin-bottom: 4px; }
-        .compare-controls { text-align: right; margin-bottom: 18px; }
-        .compare-controls button { background: #eaf1fb; border: none; border-radius: 4px; padding: 6px 14px; margin-left: 8px; cursor: pointer; font-size: 1em; transition: background 0.2s; }
-        .compare-controls button:hover { background: #d0e3fa; }
-        .row.selected { background: #e0f7fa !important; box-shadow: 0 0 0 2px #00bcd4; }
-        .row .col { transition: box-shadow 0.2s; }
-        .row .col.selected { box-shadow: 0 0 0 2px #2196f3; z-index: 1; }
-        @media (max-width: 900px) {
-            .row { flex-direction: column; }
-            .col { max-width: 100%; flex: 1 1 100%; padding: 0 8px; }
-        }
-    </style>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
-    <script>
+  <meta charset="UTF-8">
+  <title>Naive vs Secure Comparative Analysis</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
+    .container { max-width: 1200px; margin: 40px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px #0002; padding: 30px; }
+    h1 { text-align: center; }
+    .domain-section { margin-bottom: 48px; }
+    .domain-title { font-size: 1.5em; color: #1a237e; margin-bottom: 18px; }
+    .pair-row { display: flex; border-bottom: 1px solid #eee; padding: 18px 0; }
+    .pair-row:last-child { border-bottom: none; }
+    .col { flex: 0 0 33%; max-width: 33%; padding: 0 18px; box-sizing: border-box; }
+    .header { font-weight: 600; font-size: 1.1em; background: #eaf1fb; border-radius: 4px; padding: 6px; margin-bottom: 8px; }
+    .prompt { color: #3a3a3a; margin-bottom: 8px; font-size: 1em; }
+    .analysis { background: #f4f8fb; border-left: 4px solid #1976d2; padding: 10px 14px; border-radius: 6px; color: #1a237e; font-size: 1em; }
+    @media (max-width: 900px) {
+      .pair-row { flex-direction: column; }
+      .col { max-width: 100%; flex: 1 1 100%; padding: 0 8px; }
+    }
+    .back-link { display: block; margin: 0 auto 24px auto; text-align: center; }
+    .back-link a { background: #eaf1fb; color: #1a237e; padding: 10px 24px; border-radius: 6px; text-decoration: none; font-size: 1.1em; transition: background 0.2s; }
+    .back-link a:hover { background: #d0e3fa; }
+  </style>
+  <script>
+    // Embedded prompts data (same as compare_embedded.html)
     // Embedded prompts data to avoid CORS issues
     const promptsData = {
         file_handling: {
@@ -219,438 +214,85 @@
         }
     };
 
-    // Utility to get prompts from embedded data
-    function getPrompts(domain, type) {
-        return promptsData[domain] && promptsData[domain][type] ? promptsData[domain][type] : Array(20).fill('Prompt not found');
+    // Simple comparative analysis function
+    function analyzePair(naive, secure) {
+      // Heuristic: look for keywords and differences
+      let analysis = [];
+      if (naive.toLowerCase().includes('user input') && !secure.toLowerCase().includes('user input')) {
+        analysis.push('User input is now validated or sanitized.');
+      }
+      if (/open|write|read|file/.test(naive) && /validate|sanitize|permission|restrict/.test(secure)) {
+        analysis.push('File operations are now restricted and validated.');
+      }
+      if (/os\.system|exec|subprocess|shell/.test(naive) && /subprocess\.run|argument list|validate/.test(secure)) {
+        analysis.push('Shell/command execution is now validated and uses safer APIs.');
+      }
+      if (/password|secret|credential/.test(naive) && /hash|bcrypt|argon2|environment variable|vault/.test(secure)) {
+        analysis.push('Sensitive data is now stored securely (hashed or in environment variables).');
+      }
+      if (/log|logging/.test(naive) && /permission|0600|restrict/.test(secure)) {
+        analysis.push('Logs are now protected with restricted permissions.');
+      }
+      if (/upload|download/.test(naive) && /validate|sanitize|extension|directory/.test(secure)) {
+        analysis.push('File uploads/downloads are now validated and stored securely.');
+      }
+      if (/ssl|http/.test(naive) && /https|verify|certificate/.test(secure)) {
+        analysis.push('Network communication now uses HTTPS and verifies certificates.');
+      }
+      if (/sql|database/.test(naive) && /parameterized|sanitize|validate/.test(secure)) {
+        analysis.push('Database queries are now parameterized and input is sanitized.');
+      }
+      if (analysis.length === 0) {
+        analysis.push('Secure version adds validation, sanitization, or permission checks.');
+      }
+      return analysis.join(' ');
     }
 
-    // Get code examples for domains (embedded approach)
-    function getCode(domain, folder, idx) {
-        // Sample code templates based on domain and security level
-        const samples = {
-            file_handling: {
-                naive: `# Naive file handling - Example ${idx+1}
-import os
-import shutil
-
-def handle_file(user_input):
-    # Direct file operations without validation
-    filename = user_input
-    with open(filename, 'r') as f:
-        return f.read()
-
-# Unsafe file operations
-os.system("rm " + user_provided_file)
-exec(open(script_name).read())`,
-                secure: `# Secure file handling - Example ${idx+1}
-import os
-import tempfile
-from pathlib import Path
-
-def handle_file_secure(user_input):
-    # Validate and sanitize file path
-    safe_dir = "/safe/directory"
-    filename = os.path.basename(user_input)
-    full_path = os.path.join(safe_dir, filename)
-    
-    # Check if file is within allowed directory
-    if not os.path.commonpath([full_path, safe_dir]) == safe_dir:
-        raise ValueError("Invalid file path")
-    
-    with open(full_path, 'r') as f:
-        return f.read()
-
-# Safe file operations with validation
-subprocess.run(["rm", validated_file], check=True)`
-            },
-            devops: {
-                naive: `# Naive DevOps code - Example ${idx+1}
-import subprocess
-import os
-
-def deploy_app(user_command):
-    # Direct command execution
-    os.system(user_command)
-    
-def read_config(config_path):
-    # No path validation
-    with open(config_path) as f:
-        return f.read()
-
-# Hardcoded credentials
-API_KEY = "sk-1234567890abcdef"
-password = "admin123"`,
-                secure: `# Secure DevOps code - Example ${idx+1}
-import subprocess
-import os
-from pathlib import Path
-
-def deploy_app_secure(command_args):
-    # Validate command arguments
-    allowed_commands = ['deploy', 'status', 'rollback']
-    if command_args[0] not in allowed_commands:
-        raise ValueError("Command not allowed")
-    
-    # Use subprocess with argument list
-    subprocess.run(command_args, check=True, shell=False)
-
-def read_config_secure(config_path):
-    # Validate config path
-    safe_config_dir = "/etc/app/configs"
-    full_path = Path(safe_config_dir) / Path(config_path).name
-    
-    if not full_path.is_file():
-        raise FileNotFoundError("Config file not found")
-    
-    with open(full_path) as f:
-        return f.read()
-
-# Use environment variables for secrets
-API_KEY = os.environ.get('API_KEY')
-password = os.environ.get('DB_PASSWORD')`
-            },
-            webdev: {
-                naive: `# Naive web development - Example ${idx+1}
-from flask import Flask, request, render_template_string
-import subprocess
-
-app = Flask(__name__)
-
-@app.route('/execute')
-def execute_command():
-    cmd = request.args.get('cmd')
-    # Direct command execution
-    result = subprocess.check_output(cmd, shell=True)
-    return result
-
-@app.route('/template')
-def render_user_template():
-    template = request.args.get('template')
-    # Direct template rendering with user input
-    return render_template_string(template)
-
-# Hardcoded secrets in code
-SECRET_KEY = "hardcoded-secret-key"`,
-                secure: `# Secure web development - Example ${idx+1}
-from flask import Flask, request, render_template, escape
-import subprocess
-import re
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
-
-ALLOWED_COMMANDS = ['ls', 'pwd', 'whoami']
-
-@app.route('/execute')
-def execute_command():
-    cmd = request.args.get('cmd')
-    
-    # Validate command against whitelist
-    if cmd not in ALLOWED_COMMANDS:
-        return "Command not allowed", 400
-    
-    # Use subprocess with argument validation
-    result = subprocess.check_output([cmd], shell=False)
-    return result
-
-@app.route('/template')
-def render_user_template():
-    user_data = request.args.get('data', '')
-    
-    # Escape user input to prevent XSS
-    safe_data = escape(user_data)
-    
-    # Use predefined template with safe data
-    return render_template('safe_template.html', data=safe_data)`
-            },
-            testing: {
-                naive: `# Naive testing code - Example ${idx+1}
-import requests
-import subprocess
-import os
-
-def test_api_connection():
-    # Hardcoded credentials
-    username = "admin"
-    password = "password123"
-    
-    # Disable SSL verification
-    response = requests.get(
-        "https://api.example.com/data",
-        auth=(username, password),
-        verify=False
-    )
-    return response.json()
-
-def test_file_processing(user_file):
-    # No input validation
-    subprocess.call(f"cat {user_file}", shell=True)
-    
-# Expose sensitive data in logs
-print(f"API Key: {api_key}")`,
-                secure: `# Secure testing code - Example ${idx+1}
-import requests
-import subprocess
-import os
-import tempfile
-
-def test_api_connection():
-    # Use environment variables for credentials
-    username = os.environ.get('TEST_USERNAME')
-    password = os.environ.get('TEST_PASSWORD')
-    
-    if not username or not password:
-        raise ValueError("Test credentials not configured")
-    
-    # Enforce SSL verification
-    response = requests.get(
-        "https://api.example.com/data",
-        auth=(username, password),
-        verify=True,
-        timeout=30
-    )
-    response.raise_for_status()
-    return response.json()
-
-def test_file_processing(user_file):
-    # Validate file path and use safe processing
-    safe_dir = tempfile.gettempdir()
-    if not os.path.commonpath([user_file, safe_dir]) == safe_dir:
-        raise ValueError("File path not allowed")
-    
-    # Use subprocess with argument list
-    subprocess.run(["cat", user_file], check=True, shell=False)
-
-# Mask sensitive data in logs
-masked_key = api_key[:4] + "*" * (len(api_key) - 4) if api_key else "None"
-print(f"API Key: {masked_key}")`
-            }
-        };
-        
-        const domainSamples = samples[domain];
-        if (!domainSamples || !domainSamples[folder]) {
-            return `# Code example not available for ${domain}/${folder}`;
+    function renderComparisons() {
+      const domains = ['file_handling', 'devops', 'webdev', 'testing'];
+      const domainNames = {
+        file_handling: 'File Handling',
+        devops: 'DevOps',
+        webdev: 'Web Development',
+        testing: 'Testing'
+      };
+      const container = document.getElementById('analysis-container');
+      domains.forEach(domain => {
+        const naive = promptsData[domain].naive;
+        const secure = promptsData[domain].secure;
+        const section = document.createElement('div');
+        section.className = 'domain-section';
+        section.innerHTML = `<div class="domain-title">${domainNames[domain]}</div>`;
+        for (let i = 0; i < Math.min(naive.length, secure.length, 20); ++i) {
+          const row = document.createElement('div');
+          row.className = 'pair-row';
+          row.innerHTML = `
+            <div class="col">
+              <div class="header">Naive Prompt ${i+1}</div>
+              <div class="prompt">${naive[i]}</div>
+            </div>
+            <div class="col">
+              <div class="header">Secure Prompt ${i+1}</div>
+              <div class="prompt">${secure[i]}</div>
+            </div>
+            <div class="col">
+              <div class="header">Comparative Analysis</div>
+              <div class="analysis">${analyzePair(naive[i], secure[i])}</div>
+            </div>
+          `;
+          section.appendChild(row);
         }
-        
-        return domainSamples[folder];
+        container.appendChild(section);
+      });
     }
-
-    // Render rows for a domain
-    function renderRows(domain, naivePrompts, securePrompts, containerId, rowPrefix) {
-        console.log(`Rendering rows for ${domain}, container: ${containerId}`);
-        const container = document.getElementById(containerId);
-        if (!container) {
-            console.error(`Container not found: ${containerId}`);
-            return;
-        }
-        
-        container.innerHTML = '';
-        window.copyToClipboard = (text) => navigator.clipboard.writeText(text);
-        
-        const promptCount = Math.min(naivePrompts.length, securePrompts.length, 20);
-        console.log(`Rendering ${promptCount} rows for ${domain}`);
-        
-        for (let i = 0; i < promptCount; ++i) {
-            const naiveCode = getCode(domain, 'naive', i);
-            const secureCode = getCode(domain, 'secure', i);
-            const row = document.createElement('div');
-            row.className = 'row';
-            row.id = `${rowPrefix}${i+1}`;
-            
-            const naivePrompt = naivePrompts[i] || 'Prompt not available';
-            const securePrompt = securePrompts[i] || 'Prompt not available';
-            
-            row.innerHTML = `
-                <div class="col">
-                    <div class="header">Naive Prompt ${i+1}</div>
-                    <div class="prompt">${naivePrompt}</div>
-                    <div class="code-title">Naive Code ${i+1}
-                        <button title='Copy' type='button' data-copy="naive">📋</button>
-                    </div>
-                    <pre><code class="language-python">${naiveCode.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;')}</code></pre>
-                </div>
-                <div class="col">
-                    <div class="header">Secure Prompt ${i+1}</div>
-                    <div class="prompt">${securePrompt}</div>
-                    <div class="code-title">Secure Code ${i+1}
-                        <button title='Copy' type='button' data-copy="secure">📋</button>
-                    </div>
-                    <pre><code class="language-python">${secureCode.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;')}</code></pre>
-                </div>
-            `;
-            row.addEventListener('click', function(e) {
-                if (!e.target.closest('button')) {
-                    document.querySelectorAll('.row').forEach(r => r.classList.remove('selected'));
-                    row.classList.add('selected');
-                }
-            });
-            setTimeout(() => {
-                row.querySelectorAll('button[data-copy]').forEach(btn => {
-                    btn.onclick = (ev) => {
-                        ev.stopPropagation();
-                        const which = btn.getAttribute('data-copy');
-                        window.copyToClipboard(which === 'naive' ? naiveCode : secureCode);
-                        btn.textContent = '✅';
-                        setTimeout(() => btn.textContent = '📋', 1000);
-                    };
-                });
-            }, 0);
-            container.appendChild(row);
-        }
-        
-        try {
-            hljs.highlightAll();
-        } catch (error) {
-            console.warn('Syntax highlighting failed:', error);
-        }
-        
-        console.log(`Finished rendering ${promptCount} rows for ${domain}`);
-    }
-
-    // Tab setup
-    function setupTabs() {
-        const tabFile = document.getElementById('tab-file');
-        const tabDevOps = document.getElementById('tab-devops');
-        const tabWebDev = document.getElementById('tab-webdev');
-        const tabTesting = document.getElementById('tab-testing');
-        const fileContent = document.getElementById('tab-file-content');
-        const devopsContent = document.getElementById('tab-devops-content');
-        const webdevContent = document.getElementById('tab-webdev-content');
-        const testingContent = document.getElementById('tab-testing-content');
-        
-        tabFile.onclick = () => {
-            tabFile.style.background = '#eaf1fb';
-            tabDevOps.style.background = '#f7f7f7';
-            tabWebDev.style.background = '#f7f7f7';
-            tabTesting.style.background = '#f7f7f7';
-            fileContent.style.display = '';
-            devopsContent.style.display = 'none';
-            webdevContent.style.display = 'none';
-            testingContent.style.display = 'none';
-        };
-        tabDevOps.onclick = () => {
-            tabFile.style.background = '#f7f7f7';
-            tabDevOps.style.background = '#eaf1fb';
-            tabWebDev.style.background = '#f7f7f7';
-            tabTesting.style.background = '#f7f7f7';
-            fileContent.style.display = 'none';
-            devopsContent.style.display = '';
-            webdevContent.style.display = 'none';
-            testingContent.style.display = 'none';
-        };
-        tabWebDev.onclick = () => {
-            tabFile.style.background = '#f7f7f7';
-            tabDevOps.style.background = '#f7f7f7';
-            tabWebDev.style.background = '#eaf1fb';
-            tabTesting.style.background = '#f7f7f7';
-            fileContent.style.display = 'none';
-            devopsContent.style.display = 'none';
-            webdevContent.style.display = '';
-            testingContent.style.display = 'none';
-        };
-        tabTesting.onclick = () => {
-            tabFile.style.background = '#f7f7f7';
-            tabDevOps.style.background = '#f7f7f7';
-            tabWebDev.style.background = '#f7f7f7';
-            tabTesting.style.background = '#eaf1fb';
-            fileContent.style.display = 'none';
-            devopsContent.style.display = 'none';
-            webdevContent.style.display = 'none';
-            testingContent.style.display = '';
-        };
-    }
-
-    window.addEventListener('DOMContentLoaded', async function() {
-        console.log('DOM Content Loaded - starting to load prompts...');
-        
-        try {
-            // Get prompts for all domains from embedded data
-            const fileNaive = getPrompts('file_handling', 'naive');
-            const fileSecure = getPrompts('file_handling', 'secure');
-            const devopsNaive = getPrompts('devops', 'naive');
-            const devopsSecure = getPrompts('devops', 'secure');
-            const webdevNaive = getPrompts('webdev', 'naive');
-            const webdevSecure = getPrompts('webdev', 'secure');
-            const testingNaive = getPrompts('testing', 'naive');
-            const testingSecure = getPrompts('testing', 'secure');
-            
-            console.log('All prompts loaded, rendering rows...');
-            
-            renderRows('file_handling', fileNaive, fileSecure, 'comparison-rows', 'prompt');
-            renderRows('devops', devopsNaive, devopsSecure, 'devops-rows', 'devopsprompt');
-            renderRows('webdev', webdevNaive, webdevSecure, 'webdev-rows', 'webdevprompt');
-            renderRows('testing', testingNaive, testingSecure, 'testing-rows', 'testingprompt');
-            
-            console.log('All rows rendered, setting up tabs...');
-            setupTabs();
-            
-            
-            console.log('Setup complete!');
-        } catch (error) {
-            console.error('Error during setup:', error);
-            // Show error message to user
-            document.querySelector('.container').innerHTML = `
-                <div style="text-align: center; padding: 40px; color: #d32f2f;">
-                    <h2>Error loading content</h2>
-                    <p>There was an error loading the prompts and code. Please check the browser console for details.</p>
-                    <p>Error: ${error.message}</p>
-                </div>
-            `;
-        }
-    });
-    </script>
+    window.addEventListener('DOMContentLoaded', renderComparisons);
+  </script>
 </head>
 <body>
-    <header style="background: #1a237e; color: #fff; padding: 28px 0 18px 0; box-shadow: 0 2px 8px #0002;">
-        <div style="max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
-            <div style="font-size:2.1em; font-weight:700; letter-spacing:1px;">Naive vs Secure Comparison</div>
-        </div>
-        <div style="max-width:900px; margin:24px auto 0 auto; display:flex; gap:2em; justify-content:center; flex-wrap:wrap;">
-            <a href="compare_report_dashboard.html" style="background:#fff; box-shadow:0 2px 8px #ddd; border-radius:10px; padding:22px 36px; font-size:1.18em; font-weight:600; color:#1565c0; text-decoration:none; display:inline-block; min-width:260px; text-align:center; transition:box-shadow 0.2s;">
-                Security Report Comparison Dashboard
-            </a>
-            <a href="compare_analysis.html" style="background:#fff; box-shadow:0 2px 8px #ddd; border-radius:10px; padding:22px 36px; font-size:1.18em; font-weight:600; color:#1a237e; text-decoration:none; display:inline-block; min-width:260px; text-align:center; transition:box-shadow 0.2s;">
-                Comparative Analysis
-            </a>
-        </div>
-        <div style="max-width:1200px; margin:0 auto; margin-top:18px;">
-            <div id="tab-bar" style="display:flex; gap:12px;">
-                <button id="tab-file" class="tab-btn" style="background:#eaf1fb; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">File Handling</button>
-                <button id="tab-devops" class="tab-btn" style="background:#f7f7f7; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">DevOps</button>
-                <button id="tab-webdev" class="tab-btn" style="background:#f7f7f7; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">WebDev</button>
-                <button id="tab-testing" class="tab-btn" style="background:#f7f7f7; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">Testing</button>
-            </div>
-        </div>
-    </header>
-    <div class="container">
-        <div id="tab-file-content">
-            <div class="row header">
-                <div class="col">Naive Prompt & Code</div>
-                <div class="col">Secure Prompt & Code</div>
-            </div>
-            <div id="comparison-rows"></div>
-        </div>
-        <div id="tab-devops-content" style="display:none;">
-            <div class="row header">
-                <div class="col">Naive DevOps Prompt</div>
-                <div class="col">Secure DevOps Prompt</div>
-            </div>
-            <div id="devops-rows"></div>
-        </div>
-        <div id="tab-webdev-content" style="display:none;">
-            <div class="row header">
-                <div class="col">Naive WebDev Prompt</div>
-                <div class="col">Secure WebDev Prompt</div>
-            </div>
-            <div id="webdev-rows"></div>
-        </div>
-        <div id="tab-testing-content" style="display:none;">
-            <div class="row header">
-                <div class="col">Naive Testing Prompt</div>
-                <div class="col">Secure Testing Prompt</div>
-            </div>
-            <div id="testing-rows"></div>
-        </div>
-    </div>
+  <div class="back-link"><a href="compare_embedded.html">&#8592; Back to Prompt Comparison</a></div>
+  <div class="container">
+    <h1>Naive vs Secure Comparative Analysis</h1>
+    <div id="analysis-container"></div>
+  </div>
 </body>
 </html>

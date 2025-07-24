@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Security Report Comparison Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f8f8f8; }
+        h1 { color: #2c3e50; }
+        .domain-title {
+            text-align: center;
+            font-size: 2em;
+            margin-top: 2em;
+            margin-bottom: 0.5em;
+            color: #2c3e50;
+        }
+        .domain-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2em;
+            justify-content: center;
+            margin-bottom: 2em;
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .report-section {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #ddd;
+            padding: 1.5em;
+            min-width: 250px;
+        }
+        .tool-label { font-size: 1.1em; font-weight: bold; margin-bottom: 0.5em; }
+        .stats { margin-bottom: 1em; }
+        .fixed { color: green; font-weight: bold; }
+        .kept { color: orange; font-weight: bold; }
+        .introduced { color: red; font-weight: bold; }
+        .none { color: #888; }
+        .back-link { margin-top: 2em; display: block; }
+        @media (max-width: 900px) {
+            .domain-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Security Report Comparison Dashboard</h1>
+    <p>This dashboard compares <b>Bandit</b> and <b>CodeQL</b> security issues for each prompt (file) in each domain, showing which issues were fixed, kept, or introduced by the secure version. Summary statistics are provided per domain and tool.</p>
+    <div class="domain-title">File Handling</div>
+    <div class="domain-row">
+        <div class="report-section">
+            <div class="tool-label">CodeQL Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 0<br>
+                <b>Secure issues:</b> 0<br>
+                <b>Fixed:</b> <span class="fixed">0</span><br>
+                <b>Kept:</b> <span class="kept">0</span><br>
+                <b>Introduced:</b> <span class="introduced">0</span>
+            </div>
+        </div>
+        <div class="report-section">
+            <div class="tool-label">Bandit Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 14<br>
+                <b>Secure issues:</b> 0<br>
+                <b>Fixed:</b> <span class="fixed">14</span><br>
+                <b>Kept:</b> <span class="kept">0</span><br>
+                <b>Introduced:</b> <span class="introduced">0</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="domain-title">Web Development</div>
+    <div class="domain-row">
+        <div class="report-section">
+            <div class="tool-label">CodeQL Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 27<br>
+                <b>Secure issues:</b> 18<br>
+                <b>Fixed:</b> <span class="fixed">12</span><br>
+                <b>Kept:</b> <span class="kept">15</span><br>
+                <b>Introduced:</b> <span class="introduced">3</span>
+            </div>
+        </div>
+        <div class="report-section">
+            <div class="tool-label">Bandit Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 25<br>
+                <b>Secure issues:</b> 27<br>
+                <b>Fixed:</b> <span class="fixed">7</span><br>
+                <b>Kept:</b> <span class="kept">18</span><br>
+                <b>Introduced:</b> <span class="introduced">9</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="domain-title">Testing</div>
+    <div class="domain-row">
+        <div class="report-section">
+            <div class="tool-label">CodeQL Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 1<br>
+                <b>Secure issues:</b> 2<br>
+                <b>Fixed:</b> <span class="fixed">0</span><br>
+                <b>Kept:</b> <span class="kept">1</span><br>
+                <b>Introduced:</b> <span class="introduced">1</span>
+            </div>
+        </div>
+        <div class="report-section">
+            <div class="tool-label">Bandit Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 7<br>
+                <b>Secure issues:</b> 26<br>
+                <b>Fixed:</b> <span class="fixed">2</span><br>
+                <b>Kept:</b> <span class="kept">5</span><br>
+                <b>Introduced:</b> <span class="introduced">21</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="domain-title">DevOps</div>
+    <div class="domain-row">
+        <div class="report-section">
+            <div class="tool-label">CodeQL Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 3<br>
+                <b>Secure issues:</b> 1<br>
+                <b>Fixed:</b> <span class="fixed">2</span><br>
+                <b>Kept:</b> <span class="kept">1</span><br>
+                <b>Introduced:</b> <span class="introduced">0</span>
+            </div>
+        </div>
+        <div class="report-section">
+            <div class="tool-label">Bandit Report</div>
+            <div class="stats">
+                <b>Naive issues:</b> 11<br>
+                <b>Secure issues:</b> 2<br>
+                <b>Fixed:</b> <span class="fixed">9</span><br>
+                <b>Kept:</b> <span class="kept">2</span><br>
+                <b>Introduced:</b> <span class="introduced">0</span>
+            </div>
+        </div>
+    </div>
+    <a class="back-link" href="compare_embedded.html">&larr; Back to Main Comparison</a>
+</body>
+</html>
