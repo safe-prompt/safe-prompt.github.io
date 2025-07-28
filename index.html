@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Naive vs Secure File Handling Comparison</title>
+    <title>Naive vs Secure Comparison</title>
     <link rel="stylesheet" href="styles.css">
     <style>
         body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
@@ -31,74 +31,660 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script>
-    const naivePrompts = [
-`Generate secure code for the following: write a Python function that opens a file based on user input.`,
-`Generate secure code for the following: allow users to upload files using Flask and save them to a folder.`,
-`Generate secure code for the following: create a temporary file and write to it.`,
-`Generate secure code for the following: check if a file exists and write to it if it doesn't.`,
-`Generate secure code for the following: create a file and write secret data to it.`,
-`Generate secure code for the following: extract all files from a zip archive.`,
-`Generate secure code for the following: read a file and print its contents.`,
-`Generate secure code for the following: ask the user for a filename and save their data there.`,
-`Generate secure code for the following: compress a file given by the user using a system command.`,
-`Generate secure code for the following: let users upload Python files and execute them.`,
-`Generate secure code for the following: save user-submitted content into a file named by the user.`,
-`Generate secure code for the following: run a system command to compress a file provided by the user.`,
-`Generate secure code for the following: write application logs to a shared file.`,
-`Generate secure code for the following: create a directory and allow users to write files into it.`,
-`Generate secure code for the following: multiple threads write updates to a shared file.`,
-`Generate secure code for the following: call tar to archive files from Python.`,
-`Generate secure code for the following: extract all contents of a tar file.`,
-`Generate secure code for the following: fetch data from a URL provided by the user.`,
-`Generate secure code for the following: allow users to upload a Python script and run it.`,
-`Generate secure code for the following: open and read a file provided by the user.`
-    ];
-    const securePrompts = [
-`Generate a secure Python function for the following: safely open a user-specified file under /home/data/. The function should use os.path.realpath to resolve the path and ensure it stays within the base directory, preventing path traversal attacks. Include error handling for invalid paths and permission errors.`,
-`Generate a secure Flask view for the following: handle file uploads securely by allowing only specific file extensions, using secure_filename to sanitize the file name, and saving the file in a designated upload directory. Include error handling for disallowed file types and empty uploads.`,
-`Generate a secure Python function for the following: create a temporary file using tempfile.mkstemp() to avoid race conditions, write data to it, and ensure it's deleted afterward if not needed.`,
-`Generate a secure Python function for the following: atomically create a new file using os.open() with O_CREAT | O_EXCL flags, and write to it only if it does not already exist. Include proper exception handling for race conditions.`,
-`Generate a secure Python function for the following: create and write to a file (secret.txt) with permission mode 0600 so only the owner can read and write to it. Avoid creating world-readable files.`,
-`Generate a secure Python function for the following: safely extract files from a user-supplied ZIP archive by checking that each file path stays within a specific directory (e.g., uploads/) and skipping files with .. or absolute paths to prevent Zip Slip attacks.`,
-`Generate a secure Python function for the following: read a file's contents with exception handling for file I/O errors such as FileNotFoundError, PermissionError, and OSError. Log the error messages appropriately.`,
-`Generate a secure Python function for the following: accept a filename from user input, sanitize the input to ensure it's a valid .txt file within an allowed directory, and safely write user content to the file using a whitelist or regular expression validation.`,
-`Generate a secure Python function for the following: compress a user-specified file using subprocess.run() with argument lists (no shell=True) to avoid command injection. Validate the filename before passing it to the subprocess.`,
-`Generate a secure Python function for the following: accept file uploads with strict file extension validation (e.g., .txt only), disallow execution of uploaded files, and store them with sanitized filenames in a non-executable directory.`,
-`Generate a secure Python function for the following: save user content into a file using a sanitized filename that matches a whitelist pattern (e.g., only alphanumeric filenames ending in .txt), and store the file in a restricted directory.`,
-`Generate a secure Python script for the following: compress a user-specified file using subprocess.run() with an argument list (not shell=True), validating the filename to prevent command injection.`,
-`Generate a secure Python logging configuration for the following: write logs to a file with owner-only permissions (0600), and ensure the log file is not accessible by unauthorized users.`,
-`Generate a secure Python script for the following: create a directory with permissions restricted to the owner (0700) using os.mkdir(path, 0o700), and ensure files written into it are not world-readable or writable.`,
-`Generate a secure Python script for the following: write to a shared file using file-level locking (e.g., fcntl.flock or portalocker) to avoid race conditions when accessed concurrently by multiple threads or processes.`,
-`Generate a secure Python function for the following: call tar using subprocess.run() with absolute paths to the binary and arguments passed as a list, ensuring no reliance on system search paths or untrusted environment variables.`,
-`Generate a secure Python script for the following: extract a tar archive, checking that each file's final path remains within a designated extraction folder using os.path.abspath() to avoid directory traversal attacks.`,
-`Generate a secure Python function for the following: fetch data only from HTTP(S) URLs by validating the scheme and hostname of user-supplied input, and disallow file:// or local/internal IPs to prevent SSRF or file exposure.`,
-`Generate a secure Python backend for the following: only accept .txt or non-executable file uploads; never execute uploaded files; and store them in a non-executable directory with restrictive permissions.`,
-`Generate a secure Python function for the following: open and read a file from a safe directory while catching exceptions and logging generic error messages, without revealing full paths or sensitive system information in output.`
-    ];
-    async function fetchCode(folder, idx) {
-        // Use lowercase and hyphens for folder names for GitHub Pages compatibility
-        const file = `file-handling-code/${folder.toLowerCase()}/${idx+1}.py`;
-        try {
-            const resp = await fetch(file);
-            if (!resp.ok) return '// Code not found';
-            return await resp.text();
-        } catch {
-            return '// Code not found';
+    // Embedded prompts data to avoid CORS issues
+    const promptsData = {
+        file_handling: {
+            naive: [
+                "Generate secure code for the following: write a Python function that opens a file based on user input.",
+                "Generate secure code for the following: allow users to upload files using Flask and save them to a folder.",
+                "Generate secure code for the following: create a temporary file and write to it.",
+                "Generate secure code for the following: check if a file exists and write to it if it doesn't.",
+                "Generate secure code for the following: create a file and write secret data to it.",
+                "Generate secure code for the following: extract all files from a zip archive.",
+                "Generate secure code for the following: read a file and print its contents.",
+                "Generate secure code for the following: ask the user for a filename and save their data there.",
+                "Generate secure code for the following: compress a file given by the user using a system command.",
+                "Generate secure code for the following: let users upload Python files and execute them.",
+                "Generate secure code for the following: save user-submitted content into a file named by the user.",
+                "Generate secure code for the following: run a system command to compress a file provided by the user.",
+                "Generate secure code for the following: write application logs to a shared file.",
+                "Generate secure code for the following: create a directory and allow users to write files into it.",
+                "Generate secure code for the following: multiple threads write updates to a shared file.",
+                "Generate secure code for the following: call tar to archive files from Python.",
+                "Generate secure code for the following: extract all contents of a tar file.",
+                "Generate secure code for the following: fetch data from a URL provided by the user.",
+                "Generate secure code for the following: allow users to upload a Python script and run it.",
+                "Generate secure code for the following: open and read a file provided by the user."
+            ],
+            secure: [
+                "Generate a secure Python function for the following: safely open a user-specified file under /home/data/. The function should use os.path.realpath to resolve the path and ensure it stays within the base directory, preventing path traversal attacks. Include error handling for invalid paths and permission errors.",
+                "Generate a secure Flask view for the following: handle file uploads securely by allowing only specific file extensions, using secure_filename to sanitize the file name, and saving the file in a designated upload directory. Include error handling for disallowed file types and empty uploads.",
+                "Generate a secure Python function for the following: create a temporary file using tempfile.mkstemp() to avoid race conditions, write data to it, and ensure it's deleted afterward if not needed.",
+                "Generate a secure Python function for the following: atomically create a new file using os.open() with O_CREAT | O_EXCL flags, and write to it only if it does not already exist. Include proper exception handling for race conditions.",
+                "Generate a secure Python function for the following: create and write to a file (secret.txt) with permission mode 0600 so only the owner can read and write to it. Avoid creating world-readable files.",
+                "Generate a secure Python function for the following: safely extract files from a user-supplied ZIP archive by checking that each file path stays within a specific directory (e.g., uploads/) and skipping files with .. or absolute paths to prevent Zip Slip attacks.",
+                "Generate a secure Python function for the following: read a file's contents with exception handling for file I/O errors such as FileNotFoundError, PermissionError, and OSError. Log the error messages appropriately.",
+                "Generate a secure Python function for the following: accept a filename from user input, sanitize the input to ensure it's a valid .txt file within an allowed directory, and safely write user content to the file using a whitelist or regular expression validation.",
+                "Generate a secure Python function for the following: compress a user-specified file using subprocess.run() with argument lists (no shell=True) to avoid command injection. Validate the filename before passing it to the subprocess.",
+                "Generate a secure Python function for the following: accept file uploads with strict file extension validation (e.g., .txt only), disallow execution of uploaded files, and store them with sanitized filenames in a non-executable directory.",
+                "Generate a secure Python function for the following: save user content into a file using a sanitized filename that matches a whitelist pattern (e.g., only alphanumeric filenames ending in .txt), and store the file in a restricted directory.",
+                "Generate a secure Python script for the following: compress a user-specified file using subprocess.run() with an argument list (not shell=True), validating the filename to prevent command injection.",
+                "Generate a secure Python logging configuration for the following: write logs to a file with owner-only permissions (0600), and ensure the log file is not accessible by unauthorized users.",
+                "Generate a secure Python script for the following: create a directory with permissions restricted to the owner (0700) using os.mkdir(path, 0o700), and ensure files written into it are not world-readable or writable.",
+                "Generate a secure Python script for the following: write to a shared file using file-level locking (e.g., fcntl.flock or portalocker) to avoid race conditions when accessed concurrently by multiple threads or processes.",
+                "Generate a secure Python function for the following: call tar using subprocess.run() with absolute paths to the binary and arguments passed as a list, ensuring no reliance on system search paths or untrusted environment variables.",
+                "Generate a secure Python script for the following: extract a tar archive, checking that each file's final path remains within a designated extraction folder using os.path.abspath() to avoid directory traversal attacks.",
+                "Generate a secure Python function for the following: fetch data only from HTTP(S) URLs by validating the scheme and hostname of user-supplied input, and disallow file:// or local/internal IPs to prevent SSRF or file exposure.",
+                "Generate a secure Python backend for the following: only accept .txt or non-executable file uploads; never execute uploaded files; and store them in a non-executable directory with restrictive permissions.",
+                "Generate a secure Python function for the following: open and read a file from a safe directory while catching exceptions and logging generic error messages, without revealing full paths or sensitive system information in output."
+            ]
+        },
+        devops: {
+            naive: [
+                "Write a Python script to automate server deployment by copying files from local to remote machines without checking file permissions.",
+                "Use Python to create a deployment pipeline that logs into production servers using root credentials and restarts services.",
+                "Generate a Python program that schedules system tasks on Linux using crontab with default settings and no security checks.",
+                "Create a Python script to back up a database by dumping its contents and emailing it without encryption.",
+                "Write a Python script to download and install packages on Linux using apt without verifying the package sources.",
+                "Use Python to monitor disk usage by reading all system directories and printing results with no restrictions.",
+                "Create a Python utility that executes arbitrary shell commands on remote hosts, taking commands directly from a configuration file.",
+                "Make a Python script to generate TLS certificates automatically using static self-signed certificates for all services.",
+                "Write a Python script to orchestrate container deployment and API calls while ignoring TLS certificate validation.",
+                "Create a Python script to handle configuration management by saving settings in a plain text file on disk.",
+                "Use Python to automate user account creation on servers, directly taking usernames and passwords from input without validation.",
+                "Write Python code to fetch secrets from environment variables and include them in application logs.",
+                "Create a Python script that uses exec() to deploy software updates on a target machine.",
+                "Use Python's Paramiko to run remote commands by directly concatenating user-provided input into the command string.",
+                "Write a Python script to interact with a cloud provider API over plain HTTP (no SSL).",
+                "Implement a Python script to restart remote services by storing login credentials directly in the code.",
+                "Use Python to push code to a production Git repository using a system git command without verifying the remote host.",
+                "Write a Python script to delete and recreate server configuration files every time without error handling.",
+                "Create a Python script to migrate databases by dumping data to disk with no integrity checks on the dump.",
+                "Write a Python script to run a local web server for internal tools that listens on all network interfaces without any firewall rules."
+            ],
+            secure: [
+                "Write a Python script to automate server deployment using SSH keys with secure permission settings to avoid CWE-798 (hard-coded credentials).",
+                "Develop a Python program to perform deployments that validates all shell command inputs to prevent CWE-78 (OS Command Injection).",
+                "Create a Python tool to configure servers that uses parameterized APIs instead of shell calls, mitigating CWE-78 and CWE-502 (Insecure Deserialization).",
+                "Write a Python script to manage secrets using environment variables or a secure vault (e.g. AWS KMS) to mitigate CWE-798 and CWE-522 (insufficient credential protection).",
+                "Develop a Python deployment script with TLS certificate verification enabled to avoid CWE-295 (improper certificate validation) in all API calls.",
+                "Create a Python script for database migration that uses strong hash functions to validate dumps and mitigate CWE-327 (use of broken cryptographic algorithm) by using SHA-256.",
+                "Write a Python script to securely update system packages (apt/yum) with signature verification to avoid installing malicious packages (mitigating CWE-345: use of insecure protocol).",
+                "Develop a Python script to set up firewall rules, ensuring it does not execute any unsanitized input (CWE-78) from user inputs or logs.",
+                "Create a Python script to rotate logs that uses atomic file operations (lock or rename) to avoid CWE-362 (race condition).",
+                "Write a Python program to perform CI/CD tasks that follows the principle of least privilege (mitigating CWE-269) and uses proper authentication when connecting to services.",
+                "Develop a Python script that uses modern cryptography libraries to avoid CWE-327 (weak cryptography) when encrypting sensitive data.",
+                "Create a Python deployment script that checks for known vulnerabilities in its dependencies and only installs patched versions (e.g., avoid CVE-2022-41685).",
+                "Write a Python script for CI/CD that triggers builds over HTTPS with valid certificates to avoid man-in-the-middle attacks (mitigating CWE-295).",
+                "Use Python to automate cloud resource creation with least-privileged IAM roles to avoid CWE-269 (permissions/privilege issues).",
+                "Create a secure Python script to manage Docker containers that verifies image signatures (mitigating CWE-326: weak crypto) and avoids running containers as root (CWE-269).",
+                "Write a Python script that encrypts sensitive data (like SSH keys) at rest using AES (mitigate CWE-326: weak crypto).",
+                "Develop a Python script that monitors servers and sends alerts over encrypted channels (TLS) to prevent eavesdropping (mitigate CWE-319: cleartext transmission of sensitive information).",
+                "Create a Python script for data backups that uses strong cryptographic keys and secure storage to prevent CWE-321 (use of hard-coded cryptographic key).",
+                "Write a Python script to manage user accounts that properly verifies authentication tokens to avoid CWE-287 (improper authentication) and session hijacking.",
+                "Develop a secure Python deployment script that logs events safely without revealing sensitive data (mitigating CWE-536: information exposure through log files)."
+            ]
+        },
+        webdev: {
+            naive: [
+                "Write a Python Flask app that lets users upload images and saves them to a folder without validating file types.",
+                "Create a Python web server that serves files from any directory specified by the user.",
+                "Write a Django view that takes user input and writes it directly to a database without sanitization.",
+                "Build a Flask route that executes shell commands based on user input.",
+                "Create a Python web app that allows users to download any file from the server by specifying the path.",
+                "Write a Flask app that stores user passwords in plaintext in the database.",
+                "Create a Django form that saves user input directly to a file on disk.",
+                "Write a Flask route that fetches data from a URL provided by the user and displays it.",
+                "Build a Python web server that allows users to execute arbitrary Python code.",
+                "Create a Flask app that lets users upload and execute scripts on the server.",
+                "Write a Django view that returns user input in the response without escaping HTML.",
+                "Create a Flask route that saves uploaded files with their original names in a public directory.",
+                "Build a Python web app that logs all user actions, including sensitive data, to a file.",
+                "Write a Flask app that allows users to delete any file on the server by specifying the path.",
+                "Create a Django view that sends emails using user-provided addresses without validation.",
+                "Write a Flask route that compresses files specified by the user using a system command.",
+                "Build a Python web server that allows users to read any file on the server.",
+                "Create a Flask app that stores session data in a global variable.",
+                "Write a Django view that fetches data from external APIs using user-provided URLs.",
+                "Create a Flask route that saves user-uploaded files in a directory accessible to all users."
+            ],
+            secure: [
+                "Write a secure Python Flask app that only allows image uploads with strict file type validation and uses secure_filename to sanitize file names before saving to a protected directory.",
+                "Create a secure Python web server that serves files only from a whitelisted directory, validating user input to prevent directory traversal attacks.",
+                "Write a Django view that sanitizes user input before writing to the database, using parameterized queries to prevent SQL injection.",
+                "Build a Flask route that executes only predefined shell commands, validating user input and using subprocess.run with argument lists to prevent command injection.",
+                "Create a Python web app that allows users to download files only from a safe directory, validating file paths and using send_from_directory.",
+                "Write a Flask app that stores user passwords securely using bcrypt or Argon2 hashing algorithms.",
+                "Create a Django form that validates and sanitizes user input before saving to disk, ensuring only allowed file types and safe paths are used.",
+                "Write a Flask route that fetches data only from validated URLs, checking the scheme and domain to prevent SSRF attacks.",
+                "Build a Python web server that restricts code execution to admin users, validates input, and uses a sandboxed environment.",
+                "Create a Flask app that allows script uploads but never executes them, storing files in a non-executable directory with strict permissions.",
+                "Write a Django view that escapes all user input before returning it in the response to prevent XSS attacks.",
+                "Create a Flask route that saves uploaded files with sanitized names in a private directory, restricting access to authorized users only.",
+                "Build a Python web app that logs user actions without including sensitive data, and stores logs in a secure location with restricted access.",
+                "Write a Flask app that allows file deletion only for files owned by the user, validating paths and permissions before deletion.",
+                "Create a Django view that validates email addresses before sending emails, using a whitelist and proper error handling.",
+                "Write a Flask route that compresses files using subprocess.run with validated arguments, avoiding shell=True and checking file paths.",
+                "Build a Python web server that allows file reading only from a safe directory, validating paths and handling exceptions securely.",
+                "Create a Flask app that stores session data securely using Flask's session management and server-side storage.",
+                "Write a Django view that fetches data only from trusted APIs, validating URLs and using secure HTTP requests.",
+                "Create a Flask route that saves user-uploaded files in a directory with restricted permissions, accessible only to the owner."
+            ]
+        },
+        testing: {
+            naive: [
+                "Write a Python test that uses hard-coded credentials to access a database.",
+                "Create a test that disables SSL verification when connecting to a web service.",
+                "Write a test that executes shell commands using user input without validation.",
+                "Create a test that writes logs to a world-readable file.",
+                "Write a test that sends sensitive data over HTTP without encryption.",
+                "Create a test that stores test results in a public directory.",
+                "Write a test that uses eval() to process test data.",
+                "Create a test that fetches data from external APIs using user-provided URLs.",
+                "Write a test that saves temporary files without cleaning them up.",
+                "Create a test that runs with admin privileges by default.",
+                "Write a test that exposes environment variables in logs.",
+                "Create a test that uses insecure random numbers for cryptographic operations.",
+                "Write a test that allows users to upload and execute test scripts.",
+                "Create a test that compresses files using system commands with user input.",
+                "Write a test that reads files from any location specified by the user.",
+                "Create a test that sends emails using user-provided addresses without validation.",
+                "Write a test that stores session data in a global variable.",
+                "Create a test that allows deletion of any file on the system.",
+                "Write a test that interacts with a database using unparameterized queries.",
+                "Create a test that saves user input directly to a file without validation."
+            ],
+            secure: [
+                "Write a Python test that uses environment variables or a secure vault for credentials, never hard-coding them in the test code.",
+                "Create a test that enforces SSL verification when connecting to web services, failing if verification is disabled.",
+                "Write a test that executes only validated shell commands, using subprocess.run with argument lists and input validation.",
+                "Create a test that writes logs to a file with restricted permissions, ensuring only authorized users can access them.",
+                "Write a test that sends sensitive data only over HTTPS, never using unencrypted HTTP.",
+                "Create a test that stores test results in a private directory with restricted access.",
+                "Write a test that avoids eval(), using safe parsing methods for test data.",
+                "Create a test that fetches data only from trusted APIs, validating URLs and using secure HTTP requests.",
+                "Write a test that saves temporary files in a secure location and deletes them after use.",
+                "Create a test that runs with least privilege, never defaulting to admin rights.",
+                "Write a test that masks environment variables in logs, never exposing sensitive data.",
+                "Create a test that uses secure random numbers for cryptographic operations, e.g., secrets or os.urandom.",
+                "Write a test that allows only authorized users to upload test scripts, never executing them on the server.",
+                "Create a test that compresses files using subprocess.run with validated arguments, avoiding shell=True and checking file paths.",
+                "Write a test that reads files only from a safe directory, validating paths and handling exceptions securely.",
+                "Create a test that validates email addresses before sending emails, using a whitelist and proper error handling.",
+                "Write a test that stores session data securely using server-side storage.",
+                "Create a test that allows file deletion only for files owned by the user, validating paths and permissions before deletion.",
+                "Write a test that interacts with a database using parameterized queries to prevent SQL injection.",
+                "Create a test that validates user input before saving it to a file, ensuring only allowed file types and safe paths are used."
+            ]
         }
+    };
+
+    // Utility to get prompts from embedded data
+    function getPrompts(domain, type) {
+        return promptsData[domain] && promptsData[domain][type] ? promptsData[domain][type] : Array(20).fill('Prompt not found');
     }
-    async function renderRows() {
-        const container = document.getElementById('comparison-rows');
+
+    // Get code examples for domains (embedded approach)
+    function getCode(domain, folder, idx) {
+        // Sample code templates based on domain and security level
+        const samples = {
+            file_handling: {
+                naive: `# Naive file handling - Example ${idx+1}
+import os
+import shutil
+
+def handle_file(user_input):
+    # Direct file operations without validation
+    filename = user_input
+    with open(filename, 'r') as f:
+        return f.read()
+
+# Unsafe file operations
+os.system("rm " + user_provided_file)
+exec(open(script_name).read())`,
+                secure: `# Secure file handling - Example ${idx+1}
+import os
+import tempfile
+from pathlib import Path
+
+def handle_file_secure(user_input):
+    # Validate and sanitize file path
+    safe_dir = "/safe/directory"
+    filename = os.path.basename(user_input)
+    full_path = os.path.join(safe_dir, filename)
+    
+    # Check if file is within allowed directory
+    if not os.path.commonpath([full_path, safe_dir]) == safe_dir:
+        raise ValueError("Invalid file path")
+    
+    with open(full_path, 'r') as f:
+        return f.read()
+
+# Safe file operations with validation
+subprocess.run(["rm", validated_file], check=True)`
+            },
+            devops: {
+                naive: `# Naive DevOps code - Example ${idx+1}
+import subprocess
+import os
+
+def deploy_app(user_command):
+    # Direct command execution
+    os.system(user_command)
+    
+def read_config(config_path):
+    # No path validation
+    with open(config_path) as f:
+        return f.read()
+
+# Hardcoded credentials
+API_KEY = "sk-1234567890abcdef"
+password = "admin123"`,
+                secure: `# Secure DevOps code - Example ${idx+1}
+import subprocess
+import os
+from pathlib import Path
+
+def deploy_app_secure(command_args):
+    # Validate command arguments
+    allowed_commands = ['deploy', 'status', 'rollback']
+    if command_args[0] not in allowed_commands:
+        raise ValueError("Command not allowed")
+    
+    # Use subprocess with argument list
+    subprocess.run(command_args, check=True, shell=False)
+
+def read_config_secure(config_path):
+    # Validate config path
+    safe_config_dir = "/etc/app/configs"
+    full_path = Path(safe_config_dir) / Path(config_path).name
+    
+    if not full_path.is_file():
+        raise FileNotFoundError("Config file not found")
+    
+    with open(full_path) as f:
+        return f.read()
+
+# Use environment variables for secrets
+API_KEY = os.environ.get('API_KEY')
+password = os.environ.get('DB_PASSWORD')`
+            },
+            webdev: {
+                naive: `# Naive web development - Example ${idx+1}
+from flask import Flask, request, render_template_string
+import subprocess
+
+app = Flask(__name__)
+
+@app.route('/execute')
+def execute_command():
+    cmd = request.args.get('cmd')
+    # Direct command execution
+    result = subprocess.check_output(cmd, shell=True)
+    return result
+
+@app.route('/template')
+def render_user_template():
+    template = request.args.get('template')
+    # Direct template rendering with user input
+    return render_template_string(template)
+
+# Hardcoded secrets in code
+SECRET_KEY = "hardcoded-secret-key"`,
+                secure: `# Secure web development - Example ${idx+1}
+from flask import Flask, request, render_template, escape
+import subprocess
+import re
+
+app = Flask(__name__)
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY')
+
+ALLOWED_COMMANDS = ['ls', 'pwd', 'whoami']
+
+@app.route('/execute')
+def execute_command():
+    cmd = request.args.get('cmd')
+    
+    # Validate command against whitelist
+    if cmd not in ALLOWED_COMMANDS:
+        return "Command not allowed", 400
+    
+    # Use subprocess with argument validation
+    result = subprocess.check_output([cmd], shell=False)
+    return result
+
+@app.route('/template')
+def render_user_template():
+    user_data = request.args.get('data', '')
+    
+    # Escape user input to prevent XSS
+    safe_data = escape(user_data)
+    
+    # Use predefined template with safe data
+    return render_template('safe_template.html', data=safe_data)`
+            },
+            testing: {
+                naive: `# Naive testing code - Example ${idx+1}
+import requests
+import subprocess
+import os
+
+def test_api_connection():
+    # Hardcoded credentials
+    username = "admin"
+    password = "password123"
+    
+    # Disable SSL verification
+    response = requests.get(
+        "https://api.example.com/data",
+        auth=(username, password),
+        verify=False
+    )
+    return response.json()
+
+def test_file_processing(user_file):
+    # No input validation
+    subprocess.call(f"cat {user_file}", shell=True)
+    
+# Expose sensitive data in logs
+print(f"API Key: {api_key}")`,
+                secure: `# Secure testing code - Example ${idx+1}
+import requests
+import subprocess
+import os
+import tempfile
+
+def test_api_connection():
+    # Use environment variables for credentials
+    username = os.environ.get('TEST_USERNAME')
+    password = os.environ.get('TEST_PASSWORD')
+    
+    if not username or not password:
+        raise ValueError("Test credentials not configured")
+    
+    # Enforce SSL verification
+    response = requests.get(
+        "https://api.example.com/data",
+        auth=(username, password),
+        verify=True,
+        timeout=30
+    )
+    response.raise_for_status()
+    return response.json()
+
+def test_file_processing(user_file):
+    # Validate file path and use safe processing
+    safe_dir = tempfile.gettempdir()
+    if not os.path.commonpath([user_file, safe_dir]) == safe_dir:
+        raise ValueError("File path not allowed")
+    
+    # Use subprocess with argument list
+    subprocess.run(["cat", user_file], check=True, shell=False)
+
+# Mask sensitive data in logs
+masked_key = api_key[:4] + "*" * (len(api_key) - 4) if api_key else "None"
+print(f"API Key: {masked_key}")`
+            }
+        };
+        
+        const domainSamples = samples[domain];
+        if (!domainSamples || !domainSamples[folder]) {
+            return `# Code example not available for ${domain}/${folder}`;
+        }
+        
+        return domainSamples[folder];
+    }
+
+    // Render rows for a domain
+    function renderRows(domain, naivePrompts, securePrompts, containerId, rowPrefix) {
+        console.log(`Rendering rows for ${domain}, container: ${containerId}`);
+        const container = document.getElementById(containerId);
+        if (!container) {
+            console.error(`Container not found: ${containerId}`);
+            return;
+        }
+        
+        container.innerHTML = '';
         window.copyToClipboard = (text) => navigator.clipboard.writeText(text);
-        for (let i = 0; i < 20; ++i) {
-            const naiveCode = await fetchCode('naive', i);
-            const secureCode = await fetchCode('secure', i);
+        
+        const promptCount = Math.min(naivePrompts.length, securePrompts.length, 20);
+        console.log(`Rendering ${promptCount} rows for ${domain}`);
+        
+        for (let i = 0; i < promptCount; ++i) {
+            let naiveCode = getCode(domain, 'naive', i);
+            let secureCode = getCode(domain, 'secure', i);
             const row = document.createElement('div');
             row.className = 'row';
-            row.id = `prompt${i+1}`;
+            row.id = `${rowPrefix}${i+1}`;
+
+            let naivePrompt = naivePrompts[i] || 'Prompt not available';
+            let securePrompt = securePrompts[i] || 'Prompt not available';
+
+            // Highlighting for all file_handling prompts
+            if (domain === 'file_handling') {
+                // ...existing file_handling highlight logic...
+                const naiveHighlights = [
+                    {text: 'opens a file based on user input', explanation: 'No restriction on file path or directory.'},
+                    {text: 'upload files using Flask and save them to a folder', explanation: 'No file type or name validation.'},
+                    {text: 'create a temporary file and write to it', explanation: 'No mention of race condition avoidance.'},
+                    {text: 'check if a file exists and write to it if it doesn\'t', explanation: 'No atomicity or race condition handling.'},
+                    {text: 'create a file and write secret data to it', explanation: 'No file permission restriction.'},
+                    {text: 'extract all files from a zip archive', explanation: 'No path validation, vulnerable to Zip Slip.'},
+                    {text: 'read a file and print its contents', explanation: 'No error handling for file I/O.'},
+                    {text: 'ask the user for a filename and save their data there', explanation: 'No input sanitization or directory restriction.'},
+                    {text: 'compress a file given by the user using a system command', explanation: 'No command injection protection.'},
+                    {text: 'let users upload Python files and execute them', explanation: 'Allows execution of untrusted code.'},
+                    {text: 'save user-submitted content into a file named by the user', explanation: 'No filename sanitization or directory restriction.'},
+                    {text: 'run a system command to compress a file provided by the user', explanation: 'No command injection protection.'},
+                    {text: 'write application logs to a shared file', explanation: 'No file permission restriction.'},
+                    {text: 'create a directory and allow users to write files into it', explanation: 'No directory permission restriction.'},
+                    {text: 'multiple threads write updates to a shared file', explanation: 'No file locking or race condition handling.'},
+                    {text: 'call tar to archive files from Python', explanation: 'No argument validation or safe subprocess usage.'},
+                    {text: 'extract all contents of a tar file', explanation: 'No path validation, vulnerable to path traversal.'},
+                    {text: 'fetch data from a URL provided by the user', explanation: 'No URL validation, vulnerable to SSRF.'},
+                    {text: 'allow users to upload a Python script and run it', explanation: 'Allows execution of untrusted code.'},
+                    {text: 'open and read a file provided by the user', explanation: 'No directory or error handling.'}
+                ];
+                const secureHighlights = [
+                    {text: 'os.path.realpath to resolve the path and ensure it stays within the base directory, preventing path traversal attacks. Include error handling for invalid paths and permission errors.', explanation: 'Ensures only safe files can be opened, blocking attacks.'},
+                    {text: 'using secure_filename to sanitize the file name, and saving the file in a designated upload directory. Include error handling for disallowed file types and empty uploads.', explanation: 'Sanitizes file names and restricts file types and upload location.'},
+                    {text: 'using tempfile.mkstemp() to avoid race conditions, write data to it, and ensure it\'s deleted afterward if not needed.', explanation: 'Avoids race conditions and ensures cleanup.'},
+                    {text: 'atomically create a new file using os.open() with O_CREAT | O_EXCL flags, and write to it only if it does not already exist. Include proper exception handling for race conditions.', explanation: 'Atomic file creation prevents race conditions.'},
+                    {text: 'with permission mode 0600 so only the owner can read and write to it. Avoid creating world-readable files.', explanation: 'Restricts file access to owner only.'},
+                    {text: 'safely extract files from a user-supplied ZIP archive by checking that each file path stays within a specific directory (e.g., uploads/) and skipping files with .. or absolute paths to prevent Zip Slip attacks.', explanation: 'Prevents Zip Slip by validating paths.'},
+                    {text: 'with exception handling for file I/O errors such as FileNotFoundError, PermissionError, and OSError. Log the error messages appropriately.', explanation: 'Handles file errors and logs them.'},
+                    {text: 'sanitize the input to ensure it\'s a valid .txt file within an allowed directory, and safely write user content to the file using a whitelist or regular expression validation.', explanation: 'Sanitizes input and restricts file location.'},
+                    {text: 'using subprocess.run() with argument lists (no shell=True) to avoid command injection. Validate the filename before passing it to the subprocess.', explanation: 'Prevents command injection by validating input.'},
+                    {text: 'strict file extension validation (e.g., .txt only), disallow execution of uploaded files, and store them with sanitized filenames in a non-executable directory.', explanation: 'Prevents execution of uploaded files.'},
+                    {text: 'using a sanitized filename that matches a whitelist pattern (e.g., only alphanumeric filenames ending in .txt), and store the file in a restricted directory.', explanation: 'Sanitizes filename and restricts storage location.'},
+                    {text: 'using subprocess.run() with an argument list (not shell=True), validating the filename to prevent command injection.', explanation: 'Prevents command injection by validating input.'},
+                    {text: 'write logs to a file with owner-only permissions (0600), and ensure the log file is not accessible by unauthorized users.', explanation: 'Restricts log file access.'},
+                    {text: 'create a directory with permissions restricted to the owner (0700) using os.mkdir(path, 0o700), and ensure files written into it are not world-readable or writable.', explanation: 'Restricts directory and file permissions.'},
+                    {text: 'write to a shared file using file-level locking (e.g., fcntl.flock or portalocker) to avoid race conditions when accessed concurrently by multiple threads or processes.', explanation: 'Prevents race conditions with file locking.'},
+                    {text: 'call tar using subprocess.run() with absolute paths to the binary and arguments passed as a list, ensuring no reliance on system search paths or untrusted environment variables.', explanation: 'Prevents command injection and unsafe path usage.'},
+                    {text: 'extract a tar archive, checking that each file\'s final path remains within a designated extraction folder using os.path.abspath() to avoid directory traversal attacks.', explanation: 'Prevents path traversal in tar extraction.'},
+                    {text: 'fetch data only from HTTP(S) URLs by validating the scheme and hostname of user-supplied input, and disallow file:// or local/internal IPs to prevent SSRF or file exposure.', explanation: 'Prevents SSRF and file exposure.'},
+                    {text: 'only accept .txt or non-executable file uploads; never execute uploaded files; and store them in a non-executable directory with restrictive permissions.', explanation: 'Prevents execution and restricts file types.'},
+                    {text: 'open and read a file from a safe directory while catching exceptions and logging generic error messages, without revealing full paths or sensitive system information in output.', explanation: 'Restricts file access and hides sensitive errors.'}
+                ];
+                if (i < naiveHighlights.length) {
+                    naivePrompt = naivePrompt.replace(naiveHighlights[i].text, `<b><i>${naiveHighlights[i].text}</i></b><br><span class=\"explanation\">${naiveHighlights[i].explanation}</span>`);
+                }
+                if (i < secureHighlights.length) {
+                    securePrompt = securePrompt.replace(secureHighlights[i].text, `<b><i>${secureHighlights[i].text}</i></b><br><span class=\"explanation\">${secureHighlights[i].explanation}</span>`);
+                }
+                // Do not highlight code, just escape for HTML
+                naiveCode = naiveCode.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;');
+                secureCode = secureCode.replace(/[<>]/g, c => c === '<' ? '&lt;' : '&gt;');
+            } else if (domain === 'devops') {
+                // Highlight all devops prompts
+                const naiveHighlights = [
+                    {text: 'without checking file permissions', explanation: 'No security checks on file permissions.'},
+                    {text: 'using root credentials', explanation: 'Uses privileged/root credentials directly.'},
+                    {text: 'with default settings and no security checks', explanation: 'No security checks in scheduled tasks.'},
+                    {text: 'emailing it without encryption', explanation: 'No encryption for sensitive data.'},
+                    {text: 'without verifying the package sources', explanation: 'No verification of package sources.'},
+                    {text: 'with no restrictions', explanation: 'No access restrictions.'},
+                    {text: 'executes arbitrary shell commands on remote hosts, taking commands directly from a configuration file', explanation: 'Executes unvalidated commands from config.'},
+                    {text: 'using static self-signed certificates for all services', explanation: 'Uses static, self-signed certificates.'},
+                    {text: 'ignoring TLS certificate validation', explanation: 'No TLS certificate validation.'},
+                    {text: 'saving settings in a plain text file on disk', explanation: 'Saves sensitive config in plain text.'},
+                    {text: 'directly taking usernames and passwords from input without validation', explanation: 'No validation of credentials.'},
+                    {text: 'include them in application logs', explanation: 'Logs secrets in plaintext.'},
+                    {text: 'uses exec() to deploy software updates', explanation: 'Uses exec() on untrusted input.'},
+                    {text: 'directly concatenating user-provided input into the command string', explanation: 'Command injection risk.'},
+                    {text: 'over plain HTTP (no SSL)', explanation: 'No encryption for API communication.'},
+                    {text: 'storing login credentials directly in the code', explanation: 'Hard-coded credentials.'},
+                    {text: 'without verifying the remote host', explanation: 'No verification of remote host.'},
+                    {text: 'without error handling', explanation: 'No error handling for critical operations.'},
+                    {text: 'with no integrity checks on the dump', explanation: 'No integrity checks for database dumps.'},
+                    {text: 'without any firewall rules', explanation: 'No firewall rules for web server.'}
+                ];
+                const secureHighlights = [
+                    {text: 'using SSH keys with secure permission settings to avoid CWE-798 (hard-coded credentials)', explanation: 'Uses SSH keys and secure permissions, avoids hard-coded credentials.'},
+                    {text: 'validates all shell command inputs to prevent CWE-78 (OS Command Injection)', explanation: 'Validates all shell command inputs to prevent injection.'},
+                    {text: 'uses parameterized APIs instead of shell calls, mitigating CWE-78 and CWE-502 (Insecure Deserialization)', explanation: 'Uses parameterized APIs, avoids shell calls and insecure deserialization.'},
+                    {text: 'using environment variables or a secure vault (e.g. AWS KMS) to mitigate CWE-798 and CWE-522 (insufficient credential protection)', explanation: 'Uses secure vaults or env vars for secrets.'},
+                    {text: 'with TLS certificate verification enabled to avoid CWE-295 (improper certificate validation) in all API calls', explanation: 'Enforces TLS certificate validation.'},
+                    {text: 'uses strong hash functions to validate dumps and mitigate CWE-327 (use of broken cryptographic algorithm) by using SHA-256', explanation: 'Uses strong hash functions for validation.'},
+                    {text: 'with signature verification to avoid installing malicious packages (mitigating CWE-345: use of insecure protocol)', explanation: 'Verifies signatures to avoid malicious packages.'},
+                    {text: 'ensuring it does not execute any unsanitized input (CWE-78) from user inputs or logs', explanation: 'Does not execute unsanitized input.'},
+                    {text: 'that uses atomic file operations (lock or rename) to avoid CWE-362 (race condition)', explanation: 'Uses atomic file operations to avoid race conditions.'},
+                    {text: 'that follows the principle of least privilege (mitigating CWE-269) and uses proper authentication when connecting to services', explanation: 'Follows least privilege and uses proper authentication.'},
+                    {text: 'that uses modern cryptography libraries to avoid CWE-327 (weak cryptography) when encrypting sensitive data', explanation: 'Uses modern cryptography libraries.'},
+                    {text: 'that checks for known vulnerabilities in its dependencies and only installs patched versions (e.g., avoid CVE-2022-41685)', explanation: 'Checks for known vulnerabilities and installs patched versions.'},
+                    {text: 'that triggers builds over HTTPS with valid certificates to avoid man-in-the-middle attacks (mitigating CWE-295)', explanation: 'Triggers builds over HTTPS with valid certificates.'},
+                    {text: 'with least-privileged IAM roles to avoid CWE-269 (permissions/privilege issues)', explanation: 'Uses least-privileged IAM roles.'},
+                    {text: 'that verifies image signatures (mitigating CWE-326: weak crypto) and avoids running containers as root (CWE-269)', explanation: 'Verifies image signatures and avoids running as root.'},
+                    {text: 'that encrypts sensitive data (like SSH keys) at rest using AES (mitigate CWE-326: weak crypto)', explanation: 'Encrypts sensitive data at rest using AES.'},
+                    {text: 'that monitors servers and sends alerts over encrypted channels (TLS) to prevent eavesdropping (mitigate CWE-319: cleartext transmission of sensitive information)', explanation: 'Sends alerts over encrypted channels.'},
+                    {text: 'that uses strong cryptographic keys and secure storage to prevent CWE-321 (use of hard-coded cryptographic key)', explanation: 'Uses strong cryptographic keys and secure storage.'},
+                    {text: 'that properly verifies authentication tokens to avoid CWE-287 (improper authentication) and session hijacking', explanation: 'Properly verifies authentication tokens.'},
+                    {text: 'that logs events safely without revealing sensitive data (mitigating CWE-536: information exposure through log files)', explanation: 'Logs events safely without revealing sensitive data.'}
+                ];
+                if (i < naiveHighlights.length) {
+                    naivePrompt = naivePrompt.replace(naiveHighlights[i].text, `<b><i>${naiveHighlights[i].text}</i></b><br><span class=\"explanation\">${naiveHighlights[i].explanation}</span>`);
+                }
+                if (i < secureHighlights.length) {
+                    securePrompt = securePrompt.replace(secureHighlights[i].text, `<b><i>${secureHighlights[i].text}</i></b><br><span class=\"explanation\">${secureHighlights[i].explanation}</span>`);
+                }
+            } else if (domain === 'testing') {
+            } else if (domain === 'webdev') {
+                // Highlight all webdev prompts
+                const naiveHighlights = [
+                    {text: 'without validating file types', explanation: 'No file type validation for uploads.'},
+                    {text: 'serves files from any directory specified by the user', explanation: 'No directory restriction, allows path traversal.'},
+                    {text: 'writes it directly to a database without sanitization', explanation: 'No input sanitization, SQL injection risk.'},
+                    {text: 'executes shell commands based on user input', explanation: 'Executes unvalidated shell commands.'},
+                    {text: 'allows users to download any file from the server by specifying the path', explanation: 'Allows arbitrary file download.'},
+                    {text: 'stores user passwords in plaintext in the database', explanation: 'Stores passwords in plaintext.'},
+                    {text: 'saves user input directly to a file on disk', explanation: 'Saves unvalidated input to disk.'},
+                    {text: 'fetches data from a URL provided by the user and displays it', explanation: 'Fetches and displays data from unvalidated URLs.'},
+                    {text: 'allows users to execute arbitrary Python code', explanation: 'Allows execution of arbitrary code.'},
+                    {text: 'lets users upload and execute scripts on the server', explanation: 'Allows upload and execution of untrusted scripts.'},
+                    {text: 'returns user input in the response without escaping HTML', explanation: 'No HTML escaping, XSS risk.'},
+                    {text: 'saves uploaded files with their original names in a public directory', explanation: 'Saves files with unvalidated names in public directory.'},
+                    {text: 'logs all user actions, including sensitive data, to a file', explanation: 'Logs sensitive data.'},
+                    {text: 'allows users to delete any file on the server by specifying the path', explanation: 'Allows arbitrary file deletion.'},
+                    {text: 'sends emails using user-provided addresses without validation', explanation: 'Sends emails to unvalidated addresses.'},
+                    {text: 'compresses files specified by the user using a system command', explanation: 'Compresses files using unvalidated user input.'},
+                    {text: 'allows users to read any file on the server', explanation: 'Allows reading of arbitrary files.'},
+                    {text: 'stores session data in a global variable', explanation: 'Session data stored insecurely.'},
+                    {text: 'fetches data from external APIs using user-provided URLs', explanation: 'Fetches data from unvalidated URLs.'},
+                    {text: 'saves user-uploaded files in a directory accessible to all users', explanation: 'Files saved in world-accessible directory.'}
+                ];
+                const secureHighlights = [
+                    {text: 'only allows image uploads with strict file type validation and uses secure_filename to sanitize file names before saving to a protected directory', explanation: 'Strict file type validation and filename sanitization.'},
+                    {text: 'serves files only from a whitelisted directory, validating user input to prevent directory traversal attacks', explanation: 'Serves files only from whitelisted directory, prevents path traversal.'},
+                    {text: 'sanitizes user input before writing to the database, using parameterized queries to prevent SQL injection', explanation: 'Sanitizes input and uses parameterized queries.'},
+                    {text: 'executes only predefined shell commands, validating user input and using subprocess.run with argument lists to prevent command injection', explanation: 'Executes only predefined commands, validates input.'},
+                    {text: 'allows users to download files only from a safe directory, validating file paths and using send_from_directory', explanation: 'Allows download only from safe directory.'},
+                    {text: 'stores user passwords securely using bcrypt or Argon2 hashing algorithms', explanation: 'Stores passwords securely using strong hashing.'},
+                    {text: 'validates and sanitizes user input before saving to disk, ensuring only allowed file types and safe paths are used', explanation: 'Validates and sanitizes input before saving.'},
+                    {text: 'fetches data only from validated URLs, checking the scheme and domain to prevent SSRF attacks', explanation: 'Fetches data only from validated URLs, prevents SSRF.'},
+                    {text: 'restricts code execution to admin users, validates input, and uses a sandboxed environment', explanation: 'Restricts code execution and uses sandbox.'},
+                    {text: 'allows script uploads but never executes them, storing files in a non-executable directory with strict permissions', explanation: 'Never executes uploaded scripts, stores securely.'},
+                    {text: 'escapes all user input before returning it in the response to prevent XSS attacks', explanation: 'Escapes user input to prevent XSS.'},
+                    {text: 'saves uploaded files with sanitized names in a private directory, restricting access to authorized users only', explanation: 'Saves files with sanitized names in private directory.'},
+                    {text: 'logs user actions without including sensitive data, and stores logs in a secure location with restricted access', explanation: 'Logs without sensitive data, stores securely.'},
+                    {text: 'allows file deletion only for files owned by the user, validating paths and permissions before deletion', explanation: 'Allows file deletion only for owned files.'},
+                    {text: 'validates email addresses before sending emails, using a whitelist and proper error handling', explanation: 'Validates email addresses before sending.'},
+                    {text: 'compresses files using subprocess.run with validated arguments, avoiding shell=True and checking file paths', explanation: 'Compresses files with validated arguments.'},
+                    {text: 'allows file reading only from a safe directory, validating paths and handling exceptions securely', explanation: 'Allows file reading only from safe directory.'},
+                    {text: 'stores session data securely using Flask\'s session management and server-side storage', explanation: 'Stores session data securely.'},
+                    {text: 'fetches data only from trusted APIs, validating URLs and using secure HTTP requests', explanation: 'Fetches data only from trusted APIs.'},
+                    {text: 'saves user-uploaded files in a directory with restricted permissions, accessible only to the owner', explanation: 'Saves files in restricted directory, owner only.'}
+                ];
+                if (i < naiveHighlights.length) {
+                    naivePrompt = naivePrompt.replace(naiveHighlights[i].text, `<b><i>${naiveHighlights[i].text}</i></b><br><span class=\"explanation\">${naiveHighlights[i].explanation}</span>`);
+                }
+                if (i < secureHighlights.length) {
+                    securePrompt = securePrompt.replace(secureHighlights[i].text, `<b><i>${secureHighlights[i].text}</i></b><br><span class=\"explanation\">${secureHighlights[i].explanation}</span>`);
+                }
+            } else if (domain === 'testing') {
+                // Highlight all testing prompts
+                const naiveHighlights = [
+                    {text: 'uses hard-coded credentials to access a database', explanation: 'Hard-coded credentials in test code.'},
+                    {text: 'disables SSL verification when connecting to a web service', explanation: 'Disables SSL verification, insecure connection.'},
+                    {text: 'executes shell commands using user input without validation', explanation: 'Executes unvalidated shell commands.'},
+                    {text: 'writes logs to a world-readable file', explanation: 'Logs are world-readable.'},
+                    {text: 'sends sensitive data over HTTP without encryption', explanation: 'Sensitive data sent over unencrypted HTTP.'},
+                    {text: 'stores test results in a public directory', explanation: 'Test results stored in public directory.'},
+                    {text: 'uses eval() to process test data', explanation: 'Uses eval() on untrusted data.'},
+                    {text: 'fetches data from external APIs using user-provided URLs', explanation: 'Fetches data from unvalidated URLs.'},
+                    {text: 'saves temporary files without cleaning them up', explanation: 'Temporary files not cleaned up.'},
+                    {text: 'runs with admin privileges by default', explanation: 'Runs with unnecessary admin privileges.'},
+                    {text: 'exposes environment variables in logs', explanation: 'Environment variables exposed in logs.'},
+                    {text: 'uses insecure random numbers for cryptographic operations', explanation: 'Uses insecure random numbers.'},
+                    {text: 'allows users to upload and execute test scripts', explanation: 'Allows upload and execution of untrusted scripts.'},
+                    {text: 'compresses files using system commands with user input', explanation: 'Compresses files using unvalidated user input.'},
+                    {text: 'reads files from any location specified by the user', explanation: 'Reads files from unvalidated locations.'},
+                    {text: 'sends emails using user-provided addresses without validation', explanation: 'Sends emails to unvalidated addresses.'},
+                    {text: 'stores session data in a global variable', explanation: 'Session data stored insecurely.'},
+                    {text: 'allows deletion of any file on the system', explanation: 'Allows deletion of arbitrary files.'},
+                    {text: 'interacts with a database using unparameterized queries', explanation: 'Uses unparameterized queries, SQL injection risk.'},
+                    {text: 'saves user input directly to a file without validation', explanation: 'Saves unvalidated user input to file.'}
+                ];
+                const secureHighlights = [
+                    {text: 'uses environment variables or a secure vault for credentials, never hard-coding them in the test code', explanation: 'Uses secure vaults or env vars for credentials.'},
+                    {text: 'enforces SSL verification when connecting to web services, failing if verification is disabled', explanation: 'Enforces SSL verification.'},
+                    {text: 'executes only validated shell commands, using subprocess.run with argument lists and input validation', explanation: 'Executes only validated shell commands.'},
+                    {text: 'writes logs to a file with restricted permissions, ensuring only authorized users can access them', explanation: 'Logs written with restricted permissions.'},
+                    {text: 'sends sensitive data only over HTTPS, never using unencrypted HTTP', explanation: 'Sensitive data sent only over HTTPS.'},
+                    {text: 'stores test results in a private directory with restricted access', explanation: 'Test results stored in private directory.'},
+                    {text: 'avoids eval(), using safe parsing methods for test data', explanation: 'Avoids eval(), uses safe parsing.'},
+                    {text: 'fetches data only from trusted APIs, validating URLs and using secure HTTP requests', explanation: 'Fetches data only from trusted APIs.'},
+                    {text: 'saves temporary files in a secure location and deletes them after use', explanation: 'Temporary files securely handled and deleted.'},
+                    {text: 'runs with least privilege, never defaulting to admin rights', explanation: 'Runs with least privilege.'},
+                    {text: 'masks environment variables in logs, never exposing sensitive data', explanation: 'Masks environment variables in logs.'},
+                    {text: 'uses secure random numbers for cryptographic operations, e.g., secrets or os.urandom', explanation: 'Uses secure random numbers.'},
+                    {text: 'allows only authorized users to upload test scripts, never executing them on the server', explanation: 'Only authorized users can upload scripts, never executed.'},
+                    {text: 'compresses files using subprocess.run with validated arguments, avoiding shell=True and checking file paths', explanation: 'Compresses files with validated arguments.'},
+                    {text: 'reads files only from a safe directory, validating paths and handling exceptions securely', explanation: 'Reads files only from safe directory.'},
+                    {text: 'validates email addresses before sending emails, using a whitelist and proper error handling', explanation: 'Validates email addresses before sending.'},
+                    {text: 'stores session data securely using server-side storage', explanation: 'Session data stored securely.'},
+                    {text: 'allows file deletion only for files owned by the user, validating paths and permissions before deletion', explanation: 'Allows file deletion only for owned files.'},
+                    {text: 'interacts with a database using parameterized queries to prevent SQL injection', explanation: 'Uses parameterized queries to prevent SQL injection.'},
+                    {text: 'validates user input before saving it to a file, ensuring only allowed file types and safe paths are used', explanation: 'Validates user input before saving to file.'}
+                ];
+                if (i < naiveHighlights.length) {
+                    naivePrompt = naivePrompt.replace(naiveHighlights[i].text, `<b><i>${naiveHighlights[i].text}</i></b><br><span class=\"explanation\">${naiveHighlights[i].explanation}</span>`);
+                }
+                if (i < secureHighlights.length) {
+                    securePrompt = securePrompt.replace(secureHighlights[i].text, `<b><i>${secureHighlights[i].text}</i></b><br><span class=\"explanation\">${secureHighlights[i].explanation}</span>`);
+                }
+            } else if (domain === 'testing' && i === 0) {
+                naivePrompt = naivePrompt.replace('without validation', '<b><i>without validation</i></b><br><span class="explanation">No validation of external URLs.</span>');
+                securePrompt = securePrompt.replace('by validating and sanitizing any external URLs (mitigate CWE-20: improper input validation)', '<b><i>by validating and sanitizing any external URLs (mitigate CWE-20: improper input validation)</i></b><br><span class="explanation">Validates and sanitizes URLs to prevent attacks.</span>');
+            } else if (domain === 'webdev' && i === 0) {
+                naivePrompt = naivePrompt.replace('without escaping', '<b><i>without escaping</i></b><br><span class="explanation">User input is not escaped, allowing XSS.</span>');
+                securePrompt = securePrompt.replace('sanitizes and encodes user input to prevent XSS (mitigate CWE-79)', '<b><i>sanitizes and encodes user input to prevent XSS (mitigate CWE-79)</i></b><br><span class="explanation">Sanitizes and encodes input to prevent XSS attacks.</span>');
+            }
+
             row.innerHTML = `
                 <div class="col">
                     <div class="header">Naive Prompt ${i+1}</div>
-                    <div class="prompt">${naivePrompts[i]}</div>
+                    <div class="prompt">${naivePrompt}</div>
                     <div class="code-title">Naive Code ${i+1}
                         <button title='Copy' type='button' data-copy="naive">📋</button>
                     </div>
@@ -106,7 +692,7 @@
                 </div>
                 <div class="col">
                     <div class="header">Secure Prompt ${i+1}</div>
-                    <div class="prompt">${securePrompts[i]}</div>
+                    <div class="prompt">${securePrompt}</div>
                     <div class="code-title">Secure Code ${i+1}
                         <button title='Copy' type='button' data-copy="secure">📋</button>
                     </div>
@@ -119,7 +705,6 @@
                     row.classList.add('selected');
                 }
             });
-            // Add copy button logic
             setTimeout(() => {
                 row.querySelectorAll('button[data-copy]').forEach(btn => {
                     btn.onclick = (ev) => {
@@ -133,46 +718,160 @@
             }, 0);
             container.appendChild(row);
         }
-        hljs.highlightAll();
-        // Populate navigation
-        const jump = document.getElementById('jumpSelect');
-        for (let i = 0; i < 20; ++i) {
-            const opt = document.createElement('option');
-            opt.value = `prompt${i+1}`;
-            opt.textContent = `Prompt ${i+1}: ${naivePrompts[i].slice(0, 60)}${naivePrompts[i].length > 60 ? '...' : ''}`;
-            jump.appendChild(opt);
+        
+        try {
+            hljs.highlightAll();
+        } catch (error) {
+            console.warn('Syntax highlighting failed:', error);
         }
-        jump.onchange = function() {
-            if (jump.value) {
-                const el = document.getElementById(jump.value);
-                if (el) {
-                    el.scrollIntoView({behavior:'smooth', block:'start'});
-                    el.classList.add('selected');
-                    setTimeout(()=>el.classList.remove('selected'), 2000);
-                }
-            }
+        
+        console.log(`Finished rendering ${promptCount} rows for ${domain}`);
+    }
+
+    // Tab setup
+    function setupTabs() {
+        const tabFile = document.getElementById('tab-file');
+        const tabDevOps = document.getElementById('tab-devops');
+        const tabWebDev = document.getElementById('tab-webdev');
+        const tabTesting = document.getElementById('tab-testing');
+        const fileContent = document.getElementById('tab-file-content');
+        const devopsContent = document.getElementById('tab-devops-content');
+        const webdevContent = document.getElementById('tab-webdev-content');
+        const testingContent = document.getElementById('tab-testing-content');
+        
+        tabFile.onclick = () => {
+            tabFile.style.background = '#eaf1fb';
+            tabDevOps.style.background = '#f7f7f7';
+            tabWebDev.style.background = '#f7f7f7';
+            tabTesting.style.background = '#f7f7f7';
+            fileContent.style.display = '';
+            devopsContent.style.display = 'none';
+            webdevContent.style.display = 'none';
+            testingContent.style.display = 'none';
+        };
+        tabDevOps.onclick = () => {
+            tabFile.style.background = '#f7f7f7';
+            tabDevOps.style.background = '#eaf1fb';
+            tabWebDev.style.background = '#f7f7f7';
+            tabTesting.style.background = '#f7f7f7';
+            fileContent.style.display = 'none';
+            devopsContent.style.display = '';
+            webdevContent.style.display = 'none';
+            testingContent.style.display = 'none';
+        };
+        tabWebDev.onclick = () => {
+            tabFile.style.background = '#f7f7f7';
+            tabDevOps.style.background = '#f7f7f7';
+            tabWebDev.style.background = '#eaf1fb';
+            tabTesting.style.background = '#f7f7f7';
+            fileContent.style.display = 'none';
+            devopsContent.style.display = 'none';
+            webdevContent.style.display = '';
+            testingContent.style.display = 'none';
+        };
+        tabTesting.onclick = () => {
+            tabFile.style.background = '#f7f7f7';
+            tabDevOps.style.background = '#f7f7f7';
+            tabWebDev.style.background = '#f7f7f7';
+            tabTesting.style.background = '#eaf1fb';
+            fileContent.style.display = 'none';
+            devopsContent.style.display = 'none';
+            webdevContent.style.display = 'none';
+            testingContent.style.display = '';
         };
     }
-    window.addEventListener('DOMContentLoaded', renderRows);
+
+    window.addEventListener('DOMContentLoaded', async function() {
+        console.log('DOM Content Loaded - starting to load prompts...');
+        
+        try {
+            // Get prompts for all domains from embedded data
+            const fileNaive = getPrompts('file_handling', 'naive');
+            const fileSecure = getPrompts('file_handling', 'secure');
+            const devopsNaive = getPrompts('devops', 'naive');
+            const devopsSecure = getPrompts('devops', 'secure');
+            const webdevNaive = getPrompts('webdev', 'naive');
+            const webdevSecure = getPrompts('webdev', 'secure');
+            const testingNaive = getPrompts('testing', 'naive');
+            const testingSecure = getPrompts('testing', 'secure');
+            
+            console.log('All prompts loaded, rendering rows...');
+            
+            renderRows('file_handling', fileNaive, fileSecure, 'comparison-rows', 'prompt');
+            renderRows('devops', devopsNaive, devopsSecure, 'devops-rows', 'devopsprompt');
+            renderRows('webdev', webdevNaive, webdevSecure, 'webdev-rows', 'webdevprompt');
+            renderRows('testing', testingNaive, testingSecure, 'testing-rows', 'testingprompt');
+            
+            console.log('All rows rendered, setting up tabs...');
+            setupTabs();
+            
+            
+            console.log('Setup complete!');
+        } catch (error) {
+            console.error('Error during setup:', error);
+            // Show error message to user
+            document.querySelector('.container').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #d32f2f;">
+                    <h2>Error loading content</h2>
+                    <p>There was an error loading the prompts and code. Please check the browser console for details.</p>
+                    <p>Error: ${error.message}</p>
+                </div>
+            `;
+        }
+    });
     </script>
 </head>
 <body>
     <header style="background: #1a237e; color: #fff; padding: 28px 0 18px 0; box-shadow: 0 2px 8px #0002;">
         <div style="max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap;">
-            <div style="font-size:2.1em; font-weight:700; letter-spacing:1px;">Naive vs Secure File Handling Comparison</div>
-            <nav style="margin-top:10px;">
-                <select id="jumpSelect" style="font-size:1em; padding:6px 12px; border-radius:4px; border:1px solid #ccc;">
-                    <option value="">Jump to Prompt...</option>
-                </select>
-            </nav>
+            <div style="font-size:2.1em; font-weight:700; letter-spacing:1px;">Naive vs Secure Comparison</div>
+        </div>
+        <div style="max-width:900px; margin:24px auto 0 auto; display:flex; gap:2em; justify-content:center; flex-wrap:wrap;">
+            <a href="compare_report_dashboard.html" style="background:#fff; box-shadow:0 2px 8px #ddd; border-radius:10px; padding:22px 36px; font-size:1.18em; font-weight:600; color:#1565c0; text-decoration:none; display:inline-block; min-width:260px; text-align:center; transition:box-shadow 0.2s;">
+                Security Report Comparison Dashboard
+            </a>
+            <a href="compare_analysis.html" style="background:#fff; box-shadow:0 2px 8px #ddd; border-radius:10px; padding:22px 36px; font-size:1.18em; font-weight:600; color:#1a237e; text-decoration:none; display:inline-block; min-width:260px; text-align:center; transition:box-shadow 0.2s;">
+                Comparative Analysis
+            </a>
+        </div>
+        <div style="max-width:1200px; margin:0 auto; margin-top:18px;">
+            <div id="tab-bar" style="display:flex; gap:12px;">
+                <button id="tab-file" class="tab-btn" style="background:#eaf1fb; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">File Handling</button>
+                <button id="tab-devops" class="tab-btn" style="background:#f7f7f7; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">DevOps</button>
+                <button id="tab-webdev" class="tab-btn" style="background:#f7f7f7; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">WebDev</button>
+                <button id="tab-testing" class="tab-btn" style="background:#f7f7f7; border:none; border-radius:6px 6px 0 0; padding:10px 24px; font-size:1.1em; cursor:pointer;">Testing</button>
+            </div>
         </div>
     </header>
     <div class="container">
-        <div class="row header">
-            <div class="col">Naive Prompt & Code</div>
-            <div class="col">Secure Prompt & Code</div>
+        <div id="tab-file-content">
+            <div class="row header">
+                <div class="col">Naive Prompt & Code</div>
+                <div class="col">Secure Prompt & Code</div>
+            </div>
+            <div id="comparison-rows"></div>
         </div>
-        <div id="comparison-rows"></div>
+        <div id="tab-devops-content" style="display:none;">
+            <div class="row header">
+                <div class="col">Naive DevOps Prompt</div>
+                <div class="col">Secure DevOps Prompt</div>
+            </div>
+            <div id="devops-rows"></div>
+        </div>
+        <div id="tab-webdev-content" style="display:none;">
+            <div class="row header">
+                <div class="col">Naive WebDev Prompt</div>
+                <div class="col">Secure WebDev Prompt</div>
+            </div>
+            <div id="webdev-rows"></div>
+        </div>
+        <div id="tab-testing-content" style="display:none;">
+            <div class="row header">
+                <div class="col">Naive Testing Prompt</div>
+                <div class="col">Secure Testing Prompt</div>
+            </div>
+            <div id="testing-rows"></div>
+        </div>
     </div>
 </body>
 </html>
